@@ -65,7 +65,7 @@
   @media (max-width: 979px) {
     .colonnes { display: flex; flex-direction: column; }
     .col { display: contents; }
-    #priorites { order: 1; } #capture { order: 2; } #taches { order: 3; } #habitudes { order: 4; } #objectifs { order: 5; }
+    #priorites { order: 1; } #capture { order: 2; } #taches { order: 3; } #habitudes { order: 4; } #nofap { order: 5; } #objectifs { order: 6; }
   }
   @media (min-width: 980px) {
     .page { padding-left: calc(env(safe-area-inset-left) + 32px); padding-right: calc(env(safe-area-inset-right) + 32px); }
@@ -383,10 +383,58 @@
   .resume { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--ligne); }
   .resume .chiffre { color: var(--jaune); font-size: 24px; width: 24px; text-align: center; }
 
+  /* ---------- Habitudes prioritaires sur le tableau ---------- */
+  .sous-tableau { display: flex; align-items: center; gap: 8px; padding: 8px 12px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #7D90BA; }
+  .hab-prio { display: grid; grid-template-columns: 36px 44px 1fr 96px; align-items: center; padding: 2px 12px; border-bottom: 1px solid var(--ligne); transition: opacity 0.3s ease-out; }
+  .hab-prio .repere-hab { display: flex; justify-content: center; color: var(--jaune); }
+  .hab-prio .nom { font-size: 17px; font-weight: 600; cursor: pointer; }
+  .hab-prio .serie-mini { display: block; font-size: 13px; font-weight: 400; color: var(--texte-2); }
+  .hab-prio.fini .nom > span:first-child { color: var(--texte-2); text-decoration: line-through; }
+  .hab-prio input[type=checkbox] { border-color: var(--jaune); }
+  body.concentration .hab-prio { opacity: 0.35; }
+  .puce-prio { box-shadow: inset 0 0 0 1px var(--jaune); color: var(--jaune); }
+  .bascule-prio { display: flex; align-items: center; gap: 4px; min-height: 44px; cursor: pointer; font-size: 15px; margin-bottom: 4px; }
+  .bascule-prio .case { margin-left: -9px; }
+
+  /* ---------- NoFap ---------- */
+  #nofap .kpis { margin: 0 -16px; border-top: 1px solid var(--ligne); border-bottom: 1px solid var(--ligne); }
+  #nofap .kpi:nth-child(n+3) { border-bottom: none; }
+  .saisie-jour { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding: 6px 0; }
+  .saisie-jour + .saisie-jour { border-top: 1px solid var(--ligne); }
+  .saisie-jour .quand { font-weight: 600; }
+  .saisie-jour .quand small { display: block; font-weight: 400; font-size: 13px; color: var(--texte-2); }
+  .btn-ok { box-shadow: inset 0 0 0 1.5px var(--vert); color: var(--vert); background: transparent; font-weight: 700; }
+  .btn-ok.actif { background: var(--vert); color: var(--fond); }
+  .btn-echec { box-shadow: inset 0 0 0 1.5px var(--corail); color: var(--corail); background: transparent; font-weight: 700; }
+  .btn-echec.actif { background: var(--corail); color: var(--fond); }
+  .btn-ok:hover:not(:disabled), .btn-echec:hover:not(:disabled) { background: var(--panneau-2); }
+  .btn-ok.actif:hover, .btn-echec.actif:hover { filter: brightness(1.08); }
+  .btn-ok.actif:hover { background: var(--vert); } .btn-echec.actif:hover { background: var(--corail); }
+  .cal-tete { display: flex; align-items: center; gap: 4px; margin: 16px 0 6px; }
+  .cal-tete h3 { flex: 1; font-family: var(--tableau); font-size: 19px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; text-align: center; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-nom { text-align: center; font-size: 12px; font-weight: 700; color: #7D90BA; padding-bottom: 2px; }
+  .cal-jour {
+    min-width: 0; min-height: 44px; padding: 0; border-radius: 10px;
+    font-family: var(--tableau); font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums;
+    background: transparent; color: var(--texte-2); box-shadow: inset 0 0 0 1px #2A4180;
+  }
+  .cal-jour.ok { background: var(--vert); color: var(--fond); box-shadow: none; }
+  .cal-jour.echec { background: var(--corail); color: var(--fond); box-shadow: none; }
+  .cal-jour.ok:hover { background: var(--vert); filter: brightness(1.1); } .cal-jour.echec:hover { background: var(--corail); filter: brightness(1.1); }
+  .cal-jour.auj { outline: 2px solid var(--jaune); outline-offset: 1px; }
+  .cal-jour:disabled { opacity: 0.25; box-shadow: none; }
+  .cal-legende { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 13px; color: var(--texte-2); align-items: center; }
+  .cal-legende i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
   /* Téléphone : réglages du tableau des priorités (placés en dernier pour l'emporter) */
   @media (max-width: 559px) {
     .colonnes-tableau { display: none; }
     .prio { grid-template-columns: 28px 44px 1fr 62px; padding: 6px 10px 10px 8px; }
+    .hab-prio { grid-template-columns: 28px 44px 1fr 62px; padding: 2px 10px 2px 8px; }
+    .hab-prio .prio-etat { font-size: 13px; }
+    .saisie-jour { grid-template-columns: 1fr auto auto; gap: 6px; }
+    .saisie-jour button { padding: 0 12px; }
     .prio-etape { font-size: 18px; }
     .prio-etat { font-size: 13px; }
     .prio-num { font-size: 26px; }
@@ -400,6 +448,7 @@
     <a href="#haut" data-section="haut" class="actif">Aujourd’hui</a>
     <a href="#taches" data-section="taches">Tâches</a>
     <a href="#habitudes" data-section="habitudes">Habitudes</a>
+    <a href="#nofap" data-section="nofap">NoFap</a>
     <a href="#objectifs" data-section="objectifs">Objectifs</a>
   </nav>
   <div id="haut"></div>
@@ -413,6 +462,7 @@
     <div class="col">
       <section id="capture" class="panneau" aria-labelledby="titre-capture"></section>
       <section id="habitudes" class="panneau" aria-labelledby="titre-habitudes"></section>
+      <section id="nofap" class="panneau" aria-labelledby="titre-nofap"></section>
       <section id="objectifs" class="panneau" aria-labelledby="titre-objectifs"></section>
     </div>
   </div>
@@ -456,7 +506,10 @@ const TRACES = {
   corbeille: '<path d="M4 7h16M9 7V4h6v3M18 7l-1 13H7L6 7"/>',
   repere: '<path d="M18 21l-6-4.5L6 21V5a2 2 0 012-2h8a2 2 0 012 2z"/>',
   balai: '<path d="M14 4l6 6M4 20l7.5-7.5M9.5 10.5l4 4M6 14l4 4-3 3-4-4z"/>',
-  crayon: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'
+  crayon: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+  repeter: '<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 013-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 01-3 3H3"/>',
+  gauche: '<path d="M15 6l-6 6 6 6"/>',
+  droite: '<path d="M9 6l6 6-6 6"/>'
 };
 function ico(nom, cls = '') { return `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${TRACES[nom]}</svg>`; }
 
@@ -515,12 +568,13 @@ function pluriel(n, mot) { return `${n} ${mot}${n > 1 ? 's' : ''}`; }
 let etat;
 const ui = {
   tacheOuverte: null, habitudeEditee: null, objectifEdite: null,
-  assistant: null, minuteurFini: false, repereAffiche: '', alerteStockage: false, retourner: null
+  assistant: null, minuteurFini: false, repereAffiche: '', alerteStockage: false, retourner: null, moisDefi: null
 };
 
 function etatVide() {
-  return { version: VERSION, objectifs: [], taches: [], habitudes: [], capture: [], priorites: {}, minuteur: null, dernierExport: null };
+  return { version: VERSION, objectifs: [], taches: [], habitudes: [], capture: [], priorites: {}, minuteur: null, dernierExport: null, defi: defiVide() };
 }
+function defiVide() { return { nom: 'NoFap', jours: {} }; }
 
 function donneesExemple() {
   const a = aujourdhui();
@@ -542,17 +596,22 @@ function donneesExemple() {
   const t6 = t('Faire mon budget de décembre', o3, [['Télécharger les relevés de novembre', 1], ['Lister mes abonnements', 5], ['Classer les dépenses par catégorie'], ['Fixer un plafond par catégorie']]);
   const t7 = t('Résilier l’abonnement que je n’utilise plus', o3);
   const t8 = t('Prendre rendez-vous chez le dentiste', null);
-  const h = (nom, motif) => {
+  const h = (nom, motif, prioritaire = false) => {
     const jours = {};
     [...motif].forEach((c, i) => { if (c === '1') jours[decaler(a, i - 6)] = true; });
-    return { id: nouvelId(), nom, jours, ...ex };
+    return { id: nouvelId(), nom, jours, prioritaire, ...ex };
   };
+  // NoFap : 21 derniers jours (hier = dernier caractère), o = réussi, x = rechute, . = non rempli
+  const motifDefi = 'ooooxooooooooo.oooooo';
+  const joursDefi = {};
+  [...motifDefi].forEach((c, i) => { const j = decaler(a, i - motifDefi.length); if (c === 'o') joursDefi[j] = 'ok'; if (c === 'x') joursDefi[j] = 'echec'; });
   const c = texte => ({ id: nouvelId(), texte, ...ex });
   return {
     ...etatVide(),
     objectifs: [o1, o2, o3],
     taches: [t1, t2, t3, t4, t5, t6, t7, t8],
-    habitudes: [h('Boire 1,5 L d’eau', '1111110'), h('Lire 20 minutes', '0111111'), h('Méditer 10 minutes', '1011010'), h('Pas d’écran après 23 h', '1101100')],
+    habitudes: [h('Boire 1,5 L d’eau', '1111110'), h('Lire 20 minutes', '0111111', true), h('Méditer 10 minutes', '1011010'), h('Pas d’écran après 23 h', '1101100')],
+    defi: { nom: 'NoFap', jours: joursDefi, exemple: true },
     capture: [c('Idée : une série de photos en noir et blanc'), c('Appeler Maman dimanche'), c('Comparer les assurances habitation')],
     priorites: { [a]: { taches: [t1.id, t3.id, t8.id], note: 'Rapporter le colis à la Poste avant 19 h', ...ex } }
   };
@@ -570,6 +629,7 @@ function formatValide(d) {
   if (!d.habitudes.every(h => estObjet(h) && chaine(h.id) && chaine(h.nom) && estObjet(h.jours))) return false;
   if (!d.capture.every(c => estObjet(c) && chaine(c.id) && chaine(c.texte))) return false;
   if (!Object.entries(d.priorites).every(([j, p]) => /^\d{4}-\d{2}-\d{2}$/.test(j) && estObjet(p) && Array.isArray(p.taches))) return false;
+  if (d.defi !== undefined && !(estObjet(d.defi) && estObjet(d.defi.jours))) return false;
   return true;
 }
 
@@ -587,6 +647,10 @@ function normaliser(d) {
     else prises.add(o.voie);
   });
   e.objectifs.forEach(o => { if (o.voie === null) { o.voie = [0, 1, 2].find(v => !prises.has(v)) ?? 0; prises.add(o.voie); } });
+  e.habitudes.forEach(h => { h.prioritaire = !!h.prioritaire; });
+  if (!e.defi || typeof e.defi !== 'object' || !e.defi.jours) e.defi = defiVide();
+  e.defi.nom = 'NoFap';
+  for (const [j, v] of Object.entries(e.defi.jours)) if (!/^\d{4}-\d{2}-\d{2}$/.test(j) || (v !== 'ok' && v !== 'echec')) delete e.defi.jours[j];
   Object.values(e.priorites).forEach(p => { p.note = typeof p.note === 'string' ? p.note : ''; });
   if (e.minuteur && typeof e.minuteur.fin !== 'number') e.minuteur = null;
   e.dernierExport = dateOk(e.dernierExport);
@@ -641,7 +705,36 @@ function serie(h) {
 }
 function aDesExemples() {
   return ['objectifs', 'taches', 'habitudes', 'capture'].some(k => etat[k].some(x => x.exemple)) ||
-    Object.values(etat.priorites).some(p => p.exemple);
+    Object.values(etat.priorites).some(p => p.exemple) || !!etat.defi.exemple;
+}
+const habitudesPrioritaires = () => etat.habitudes.filter(h => h.prioritaire);
+
+/* ----- NoFap : calculs ----- */
+function serieDefi() {
+  const J = etat.defi.jours;
+  let j = aujourdhui();
+  if (!J[j]) j = decaler(j, -1);
+  let n = 0;
+  while (J[j] === 'ok') { n++; j = decaler(j, -1); }
+  return n;
+}
+function recordDefi() {
+  const J = etat.defi.jours;
+  const ok = Object.keys(J).filter(j => J[j] === 'ok').sort();
+  let meilleur = 0, courant = 0, prec = null;
+  for (const j of ok) {
+    courant = prec && ecartJours(prec, j) === 1 ? courant + 1 : 1;
+    meilleur = Math.max(meilleur, courant); prec = j;
+  }
+  return meilleur;
+}
+function statsDefi() {
+  const J = etat.defi.jours, a = aujourdhui();
+  let ok = 0, echec = 0;
+  for (let i = 0; i < 30; i++) { const v = J[decaler(a, -i)]; if (v === 'ok') ok++; if (v === 'echec') echec++; }
+  const mois = a.slice(0, 7);
+  const rechutesMois = Object.entries(J).filter(([j, v]) => v === 'echec' && j.startsWith(mois)).length;
+  return { taux: ok + echec ? Math.round(ok / (ok + echec) * 100) : null, ok, echec, rechutesMois };
 }
 function marquer(x, coche) { x.faite = coche; x.faiteLe = coche ? aujourdhui() : null; }
 function progressionObjectif(o) {
@@ -671,7 +764,7 @@ function rendreTout() {
   ui.repereAffiche = n.jour + (n.heure >= 18 ? '-soir' : '-jour');
 
   rendreAlerte(); rendreEntete(n); rendreIndicateurs(); rendrePriorites(); rendreCapture();
-  rendreTaches(); rendreHabitudes(); rendreObjectifs(); rendrePied(); rendreAssistant();
+  rendreTaches(); rendreHabitudes(); rendreDefi(); rendreObjectifs(); rendrePied(); rendreAssistant();
   document.body.classList.toggle('concentration', !!(etat.minuteur && etat.minuteur.fin > Date.now()));
 
   const nouveauCorps = $('.modale-corps');
@@ -680,6 +773,7 @@ function rendreTout() {
   if (cleFocus) { const el = document.querySelector(`[data-fk="${cleFocus}"]`); if (el) el.focus({ preventScroll: true }); }
   ui.retourner = null;
   ajusterTout();
+  mettreAJourBadge();
 }
 
 function rendreAlerte() {
@@ -775,6 +869,18 @@ function rendrePriorites() {
   }
   h += `<div class="bande"><h2 id="titre-prio">Mes 3 priorités du jour</h2>
     ${liste.length ? `<span class="compte-bande">${liste.filter(tacheFinie).length}/${liste.length}</span><button class="btn-modifier" data-action="choisir-maintenant" aria-label="Modifier les priorités"><span class="txt">Modifier</span>${ico('crayon')}</button>` : ''}</div>`;
+  const habs = habitudesPrioritaires();
+  if (habs.length) {
+    h += `<div class="sous-tableau">Habitudes du jour</div>`;
+    for (const hab of habs) {
+      const fait = !!hab.jours[jour];
+      h += `<div class="hab-prio${fait ? ' fini' : ''}"><span class="repere-hab">${ico('repeter')}</span>
+        <label class="case"><input type="checkbox" id="hp-${hab.id}" data-action="habitude-cocher" data-id="${hab.id}" data-jour="${jour}" ${fait ? 'checked' : ''} aria-label="${esc(hab.nom)} — aujourd’hui"></label>
+        <label class="nom" for="hp-${hab.id}"><span data-nom-habitude="${hab.id}">${esc(hab.nom)}</span><span class="serie-mini">Série : ${pluriel(serie(hab), 'jour')}</span></label>
+        <span class="prio-etat${fait ? ' fait' : ''}">${fait ? ico('coche') + 'Fait' : 'À faire'}</span></div>`;
+    }
+    h += `<div class="sous-tableau">Mes priorités</div>`;
+  }
   if (!liste.length) {
     h += `<div class="prio-vide"><p class="vide">Aucune priorité préparée pour aujourd’hui.</p>
           <button class="btn-jaune btn-large" data-action="choisir-maintenant">Choisis 3 tâches maintenant</button></div>`;
@@ -935,14 +1041,15 @@ function rendreHabitudes() {
       const s = serie(hab);
       const edit = ui.habitudeEditee === hab.id;
       h += `<div class="habitude"><div class="habitude-haut">
-          <span class="habitude-nom" data-nom-habitude="${hab.id}">${esc(hab.nom)}</span>
+          <span class="habitude-nom"><span data-nom-habitude="${hab.id}">${esc(hab.nom)}</span>${hab.prioritaire ? ' <span class="puce puce-prio">Prioritaire</span>' : ''}</span>
           <span class="serie${s ? ' active' : ''}">Série : ${pluriel(s, 'jour')}</span>
           <button class="btn-discret" data-action="habitude-editer" data-id="${hab.id}">${edit ? 'OK' : 'Modifier'}</button>
         </div>`;
       if (edit) {
         h += `<div class="ligne-form" style="margin-bottom:8px">
             <input type="text" value="${esc(hab.nom)}" data-action="habitude-renommer" data-id="${hab.id}" aria-label="Nom de l’habitude" enterkeyhint="done" autocomplete="off">
-            <button class="btn-danger" data-action="habitude-suppr" data-id="${hab.id}">Supprimer</button></div>`;
+            <button class="btn-danger" data-action="habitude-suppr" data-id="${hab.id}">Supprimer</button></div>
+          <label class="bascule-prio"><span class="case"><input type="checkbox" data-action="habitude-prioritaire" data-id="${hab.id}" ${hab.prioritaire ? 'checked' : ''}></span>Prioritaire : l’afficher chaque jour dans mes priorités</label>`;
       }
       h += `<div class="grille">${jours.map(j => `<label class="case${j === a ? ' auj-col' : ''}"><input type="checkbox" data-action="habitude-cocher" data-id="${hab.id}" data-jour="${j}" ${hab.jours[j] ? 'checked' : ''} aria-label="${esc(hab.nom)} — ${esc(formatJour(j, { weekday: 'long', day: 'numeric', month: 'long' }))}"></label>`).join('')}</div></div>`;
     }
@@ -953,6 +1060,46 @@ function rendreHabitudes() {
       <input type="text" name="nom" data-fk="nouvelle-habitude" placeholder="Nouvelle habitude…" enterkeyhint="done" autocomplete="off" aria-label="Nouvelle habitude">
       <button type="submit" class="btn-icone" aria-label="Ajouter l’habitude">${ico('plus')}</button></form>`;
   $('#habitudes').innerHTML = h;
+}
+
+function rendreDefi() {
+  const a = aujourdhui(), J = etat.defi.jours, hier = decaler(a, -1);
+  const s = serieDefi(), rec = recordDefi(), st = statsDefi();
+  const moisActuel = a.slice(0, 7);
+  const mois = ui.moisDefi && ui.moisDefi <= moisActuel ? ui.moisDefi : moisActuel;
+  const [y, m] = mois.split('-').map(Number);
+  const premier = new Date(Date.UTC(y, m - 1, 1));
+  const decal = (premier.getUTCDay() + 6) % 7;
+  const nbJours = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const titreMois = majuscule(new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(premier));
+  const ligne = (j, quand) => {
+    const v = J[j];
+    return `<div class="saisie-jour"><span class="quand">${quand}<small>${esc(formatJour(j, { weekday: 'long', day: 'numeric', month: 'long' }))}</small></span>
+      <button class="btn-ok${v === 'ok' ? ' actif' : ''}" data-action="defi-poser" data-jour="${j}" data-val="ok" aria-pressed="${v === 'ok'}">${ico('coche')}Réussi</button>
+      <button class="btn-echec${v === 'echec' ? ' actif' : ''}" data-action="defi-poser" data-jour="${j}" data-val="echec" aria-pressed="${v === 'echec'}">Rechute</button></div>`;
+  };
+  let h = `<div class="entete-panneau"><h2 id="titre-nofap">NoFap</h2></div>`;
+  h += ligne(a, 'Aujourd’hui');
+  if (!J[hier]) h += ligne(hier, 'Hier, pas rempli');
+  h += `<div class="kpis" style="margin-top:12px">
+    <div class="kpi" style="--c:var(--vert)"><h3>Série en cours</h3><div class="valeur chiffre">${s}<small> j</small></div><div class="detail">${s ? 'jours d’affilée' : 'nouveau départ'}</div></div>
+    <div class="kpi" style="--c:var(--jaune)"><h3>Record</h3><div class="valeur chiffre">${rec}<small> j</small></div><div class="detail">${rec && s >= rec ? '<b>record en cours</b>' : 'meilleure série'}</div></div>
+    <div class="kpi" style="--c:var(--bleu)"><h3>Réussite 30 j</h3><div class="valeur chiffre">${st.taux === null ? '—' : st.taux}<small>${st.taux === null ? '' : ' %'}</small></div><div class="detail">${st.ok} réussi${st.ok > 1 ? 's' : ''} · ${st.echec} rechute${st.echec > 1 ? 's' : ''}</div></div>
+    <div class="kpi" style="--c:var(--corail)"><h3>Rechutes du mois</h3><div class="valeur chiffre">${st.rechutesMois}</div><div class="detail">en ${esc(formatJour(a, { month: 'long' }))}</div></div>
+  </div>`;
+  h += `<div class="cal-tete"><button class="btn-icone" data-action="defi-mois" data-sens="-1" aria-label="Mois précédent">${ico('gauche')}</button>
+    <h3>${esc(titreMois)}</h3>
+    <button class="btn-icone" data-action="defi-mois" data-sens="1" aria-label="Mois suivant" ${mois >= moisActuel ? 'disabled' : ''}>${ico('droite')}</button></div>`;
+  h += `<div class="cal">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(x => `<span class="cal-nom" aria-hidden="true">${x}</span>`).join('')}`;
+  for (let i = 0; i < decal; i++) h += '<span></span>';
+  for (let d = 1; d <= nbJours; d++) {
+    const j = `${mois}-${String(d).padStart(2, '0')}`;
+    const v = J[j];
+    const libelle = v === 'ok' ? 'réussi' : v === 'echec' ? 'rechute' : 'pas rempli';
+    h += `<button class="cal-jour${v ? ' ' + v : ''}${j === a ? ' auj' : ''}" data-action="defi-jour" data-jour="${j}" ${j > a ? 'disabled' : ''} aria-label="${esc(formatJour(j, { day: 'numeric', month: 'long' }))} : ${libelle}">${d}</button>`;
+  }
+  h += `</div><div class="cal-legende"><span><i style="background:var(--vert)"></i>Réussi</span><span><i style="background:var(--corail)"></i>Rechute</span><span><i style="box-shadow:inset 0 0 0 1px #2A4180"></i>Pas rempli</span><span>Touche un jour pour le changer</span></div>`;
+  $('#nofap').innerHTML = h;
 }
 
 function rendreObjectifs() {
@@ -1029,7 +1176,8 @@ function rendreAssistant() {
     c += etat.capture.length ? `<ul class="liste">${etat.capture.map(itemCapture).join('')}</ul>` : '<p class="vide">Ta boîte de capture est vide. Passe à l’étape suivante.</p>';
   } else if (A.etape === 2) {
     const plein = A.choix.length >= MAX_PRIORITES;
-    c += `<p class="intro">Choisis de 1 à 3 tâches pour ${mot}.</p>
+    const hp = habitudesPrioritaires();
+    c += `<p class="intro">Choisis de 1 à 3 tâches pour ${mot} : rendez-vous, appel, tâche importante.${hp.length ? ` Tes habitudes prioritaires (${hp.map(x => esc(x.nom)).join(', ')}) s’ajoutent automatiquement.` : ''}</p>
       <p class="limite">${A.choix.length}/3 choisie${A.choix.length > 1 ? 's' : ''}${plein ? ' — maximum atteint' : ''}</p>`;
     const dispo = etat.taches.filter(t => !tacheFinie(t));
     if (!dispo.length) c += '<p class="vide">Aucune tâche en cours. Ajoute-en une ci-dessous.</p>';
@@ -1149,7 +1297,8 @@ function tic() {
 function mettreAJourBadge() {
   if (!('setAppBadge' in navigator)) return;
   try {
-    const n = prioritesDuJour().filter(t => !tacheFinie(t)).length;
+    const a = aujourdhui();
+    const n = prioritesDuJour().filter(t => !tacheFinie(t)).length + habitudesPrioritaires().filter(h => !h.jours[a]).length;
     const p = n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge();
     if (p && p.catch) p.catch(() => {});
   } catch (e) { /* badge non pris en charge */ }
@@ -1219,6 +1368,7 @@ function effacerExemples() {
     p.taches = p.taches.filter(id => tache(id));
     if (p.exemple) delete etat.priorites[j];
   }
+  if (etat.defi.exemple) etat.defi = defiVide();
   ui.tacheOuverte = ui.habitudeEditee = ui.objectifEdite = null;
   sauver(); rendreTout();
 }
@@ -1258,6 +1408,26 @@ const clics = {
     const t = prioritesDuJour()[0];
     etat.minuteur = { fin: Date.now() + DUREE_MINUTEUR, tache: t ? t.id : null };
     ui.minuteurFini = false; sauver(); rendreTout();
+  },
+  'defi-poser': el => {
+    const J = etat.defi.jours, j = el.dataset.jour;
+    if (J[j] === el.dataset.val) delete J[j]; else J[j] = el.dataset.val;
+    sauver(); rendreTout();
+  },
+  'defi-jour': el => {
+    const J = etat.defi.jours, j = el.dataset.jour;
+    if (j > aujourdhui()) return;
+    if (!J[j]) J[j] = 'ok'; else if (J[j] === 'ok') J[j] = 'echec'; else delete J[j];
+    sauver(); rendreTout();
+    const meme = document.querySelector(`.cal-jour[data-jour="${j}"]`); if (meme) meme.focus({ preventScroll: true });
+  },
+  'defi-mois': el => {
+    const actuel = aujourdhui().slice(0, 7);
+    const [y, m] = (ui.moisDefi || actuel).split('-').map(Number);
+    const d = new Date(Date.UTC(y, m - 1 + Number(el.dataset.sens), 1));
+    const nv = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+    if (nv > actuel) return;
+    ui.moisDefi = nv; rendreTout();
   },
   'minuteur-arreter': () => { etat.minuteur = null; sauver(); rendreTout(); },
   'minuteur-ok': () => { ui.minuteurFini = false; rendreTout(); },
@@ -1348,6 +1518,7 @@ const changements = {
     if (el.checked) h.jours[el.dataset.jour] = true; else delete h.jours[el.dataset.jour];
     sauver(); rendreTout();
   },
+  'habitude-prioritaire': el => { const h = habitude(el.dataset.id); if (h) { h.prioritaire = el.checked; sauver(); rendreTout(); } },
   'habitude-renommer': el => {
     const h = habitude(el.dataset.id); const v = el.value.trim();
     if (!h) return; if (!v) { el.value = h.nom; return; }
@@ -1432,7 +1603,7 @@ document.addEventListener('keydown', e => {
 
 /* ----- Barre de sections : surligne la section visible ----- */
 function majSectionActive() {
-  const ids = ['haut', 'taches', 'habitudes', 'objectifs'];
+  const ids = ['haut', 'taches', 'habitudes', 'nofap', 'objectifs'];
   const seuil = ($('#sections').getBoundingClientRect().bottom || 0) + 24;
   let actif = 'haut';
   for (const id of ids) { const el = document.getElementById(id); if (el && el.getBoundingClientRect().top <= seuil) actif = id; }
