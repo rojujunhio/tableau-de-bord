@@ -107,13 +107,13 @@
   .btn-icone:hover:not(:disabled) { color: var(--texte); background: var(--panneau-2); }
   .btn-danger { color: var(--corail); }
   .btn-large { width: 100%; }
-  input[type=text], select {
+  input[type=text], input[type=url], input[type=password], select {
     font: inherit; font-size: 17px; color: var(--texte);
     min-height: 44px; width: 100%; padding: 0 14px;
     background: var(--fond); border: 1px solid var(--ligne); border-radius: 12px;
     -webkit-appearance: none; appearance: none;
   }
-  input[type=text]:focus, select:focus { border-color: var(--jaune); outline: none; }
+  input[type=text]:focus, input[type=url]:focus, input[type=password]:focus, select:focus { border-color: var(--jaune); outline: none; }
   select {
     padding-right: 38px; cursor: pointer;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5' fill='none' stroke='%23A3B4D8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -357,7 +357,14 @@
   }
 
   /* ---------- Fenêtre « Préparer demain » ---------- */
-  #modale { position: fixed; inset: 0; z-index: 10; background: rgba(2, 7, 20, 0.7); display: flex; align-items: center; justify-content: center; }
+  .formulaire-sync input { margin-bottom: 2px; }
+  .formulaire-sync button[type=submit] { width: 100%; margin-top: 16px; }
+  .erreur-sync { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(255, 107, 91, 0.12); color: #FFB3AA; font-size: 15px; }
+  .statut-sync { font-weight: 600; margin-bottom: 14px; }
+  .pile { display: grid; gap: 10px; margin: 8px 0 16px; }
+  .pile button { min-height: 56px; flex-direction: column; gap: 2px; padding: 8px 16px; }
+  .pile button small { font-weight: 400; font-size: 13px; opacity: 0.85; }
+  #modale, #reglages { position: fixed; inset: 0; z-index: 10; background: rgba(2, 7, 20, 0.7); display: flex; align-items: center; justify-content: center; }
   .modale-boite { background: var(--fond); width: 100%; height: 100%; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
   @media (min-width: 700px) and (min-height: 600px) {
     .modale-boite { width: 620px; height: min(820px, 92vh); border-radius: 20px; border: 1px solid var(--ligne); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5); overflow: hidden; }
@@ -469,6 +476,7 @@
   <footer id="pied"></footer>
 </div>
 <div id="modale" hidden></div>
+<div id="reglages" hidden></div>
 <input type="file" id="fichier-import" accept=".json,application/json" hidden>
 
 <script>
@@ -509,7 +517,8 @@ const TRACES = {
   crayon: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
   repeter: '<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 013-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 01-3 3H3"/>',
   gauche: '<path d="M15 6l-6 6 6 6"/>',
-  droite: '<path d="M9 6l6 6-6 6"/>'
+  droite: '<path d="M9 6l6 6-6 6"/>',
+  nuage: '<path d="M7 18.5a4.5 4.5 0 01-.6-8.96 6 6 0 0111.5 1.6A3.7 3.7 0 0117.3 18.5z"/>'
 };
 function ico(nom, cls = '') { return `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${TRACES[nom]}</svg>`; }
 
@@ -647,6 +656,7 @@ function normaliser(d) {
     else prises.add(o.voie);
   });
   e.objectifs.forEach(o => { if (o.voie === null) { o.voie = [0, 1, 2].find(v => !prises.has(v)) ?? 0; prises.add(o.voie); } });
+  e.modifieLe = Number.isFinite(e.modifieLe) ? e.modifieLe : 0;
   e.habitudes.forEach(h => { h.prioritaire = !!h.prioritaire; });
   if (!e.defi || typeof e.defi !== 'object' || !e.defi.jours) e.defi = defiVide();
   e.defi.nom = 'NoFap';
@@ -675,7 +685,7 @@ function charger() {
   }
 }
 
-function sauver() {
+function ecrireLocal() {
   try { localStorage.setItem(CLE_STOCKAGE, JSON.stringify(etat)); }
   catch (e) {
     if (!ui.alerteStockage) {
@@ -683,7 +693,13 @@ function sauver() {
       alert('Impossible d’enregistrer sur cet appareil (navigation privée ou stockage plein). Exporte tes données pour ne rien perdre.');
     }
   }
+}
+// Chaque modification : on note l'heure (pour savoir quelle version est la plus récente), on enregistre, on synchronise.
+function sauver() {
+  etat.modifieLe = Date.now();
+  ecrireLocal();
   mettreAJourBadge();
+  programmerEnvoi();
 }
 
 const tache = id => etat.taches.find(t => t.id === id);
@@ -1145,9 +1161,11 @@ function rendrePied() {
   $('#pied').innerHTML = `
     <button data-action="exporter">${ico('exporter')}Exporter mes données</button>
     <button data-action="importer">${ico('importer')}Importer mes données</button>
+    <button class="plein" data-action="sync-ouvrir">${ico('nuage')}Synchronisation</button>
     ${aDesExemples() ? `<button class="plein" data-action="effacer-exemple">${ico('balai')}Effacer les données d’exemple</button>` : ''}
     ${badge}
-    <p class="info">Tes données restent sur cet appareil. Dernière sauvegarde : ${esc(derniere)}.</p>`;
+    <p class="info">${sync ? 'Données chiffrées et synchronisées entre tes appareils.' : 'Tes données restent sur cet appareil.'} Dernière sauvegarde : ${esc(derniere)}.</p>
+    <p class="info" id="statut-sync" data-statut-sync>${esc(texteStatut())}</p>`;
 }
 
 /* ----- Fenêtre « Préparer demain » (4 étapes) ----- */
@@ -1165,7 +1183,7 @@ function ouvrirAssistant(cible, etape) {
 function rendreAssistant() {
   const m = $('#modale');
   const A = ui.assistant;
-  if (!A) { m.hidden = true; m.innerHTML = ''; document.body.classList.remove('bloque'); return; }
+  if (!A) { m.hidden = true; m.innerHTML = ''; if (!ui.reglages) document.body.classList.remove('bloque'); return; }
   m.hidden = false; document.body.classList.add('bloque');
   const demain = A.cible !== aujourdhui();
   const mot = demain ? 'demain' : 'aujourd’hui';
@@ -1355,6 +1373,205 @@ async function importer(fichier) {
   alert('Données importées.');
 }
 
+/* =====================================================================
+   SYNCHRONISATION CHIFFRÉE (Supabase)
+   La phrase secrète ne quitte jamais l'appareil. Elle sert à fabriquer :
+   - une clé de chiffrement (AES-GCM) : les données partent illisibles ;
+   - un identifiant de 64 caractères : la « boîte » où ranger les données en ligne.
+   Les réglages de synchronisation sont gardés à part (CLE_SYNC) et ne sont
+   jamais envoyés ni exportés.
+   ===================================================================== */
+const CLE_SYNC = CLE_STOCKAGE + '-synchro';
+let sync = null;
+let fileSync = Promise.resolve();
+let minuteurEnvoi = null;
+const encodeur = new TextEncoder(), decodeur = new TextDecoder();
+
+function chargerSync() {
+  try { const s = JSON.parse(localStorage.getItem(CLE_SYNC)); if (s && s.url && s.api && s.id && s.k) sync = s; } catch (e) { sync = null; }
+}
+function sauverSync() {
+  try { if (sync) localStorage.setItem(CLE_SYNC, JSON.stringify(sync)); else localStorage.removeItem(CLE_SYNC); } catch (e) {}
+}
+function versB64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+function depuisB64(s) { const b = atob(s); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+
+async function deriver(phrase) {
+  const base = await crypto.subtle.importKey('raw', encodeur.encode(phrase.normalize('NFC')), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: encodeur.encode('tableau-de-bord/synchro/v1'), iterations: 310000, hash: 'SHA-256' }, base, 512));
+  return { k: versB64(bits.slice(0, 32)), id: Array.from(bits.slice(32), x => x.toString(16).padStart(2, '0')).join('') };
+}
+function cleAes(conf) { return crypto.subtle.importKey('raw', depuisB64(conf.k), 'AES-GCM', false, ['encrypt', 'decrypt']); }
+async function chiffrer(obj, conf = sync) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const c = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await cleAes(conf), encodeur.encode(JSON.stringify(obj)));
+  return 'v1.' + versB64(iv) + '.' + versB64(new Uint8Array(c));
+}
+async function dechiffrer(texte, conf = sync) {
+  const [v, iv, c] = String(texte).split('.');
+  if (v !== 'v1' || !iv || !c) throw new Error('format');
+  const clair = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: depuisB64(iv) }, await cleAes(conf), depuisB64(c));
+  return JSON.parse(decodeur.decode(clair));
+}
+
+async function rpc(nom, corps, conf = sync) {
+  const entetes = { 'Content-Type': 'application/json', apikey: conf.api };
+  if (conf.api.startsWith('eyJ')) entetes.Authorization = 'Bearer ' + conf.api;
+  const r = await fetch(conf.url + '/rest/v1/rpc/' + nom, { method: 'POST', headers: entetes, body: JSON.stringify(corps) });
+  if (!r.ok) {
+    let info = {}; try { info = await r.json(); } catch (e) {}
+    const err = new Error(info.message || ('Erreur ' + r.status)); err.status = r.status; err.code = info.code; throw err;
+  }
+  const t = await r.text();
+  return t ? JSON.parse(t) : null;
+}
+function messageErreur(e) {
+  if (e instanceof TypeError) return 'Impossible de joindre Supabase : vérifie l’adresse du projet et ta connexion Internet.';
+  if (e.status === 404 || e.code === 'PGRST202') return 'Le script SQL n’a pas encore été exécuté dans ton projet Supabase (étape 2 du guide).';
+  if (e.status === 401 || e.status === 403) return 'Clé refusée : vérifie la clé publique copiée depuis Supabase.';
+  return e.message || 'Erreur inconnue';
+}
+function enFile(fn) { fileSync = fileSync.then(fn, fn); return fileSync; }
+
+function statut(s, msg = '') {
+  ui.sync = { s, msg };
+  if (s === 'ok' && sync) { sync.derniere = Date.now(); sauverSync(); }
+  const t = texteStatut();
+  document.querySelectorAll('[data-statut-sync]').forEach(n => { n.textContent = t; });
+}
+function texteStatut() {
+  if (!sync) return 'Synchronisation : désactivée sur cet appareil.';
+  const s = ui.sync && ui.sync.s;
+  if (s === 'encours') return 'Synchronisation en cours…';
+  if (s === 'horsligne') return 'Hors ligne : tes modifications partiront au retour du réseau.';
+  if (s === 'erreur') return 'Synchronisation en échec : ' + ui.sync.msg;
+  if (sync.derniere) {
+    const h = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU, hour: '2-digit', minute: '2-digit' }).format(new Date(sync.derniere));
+    return `Synchronisé à ${h}.`;
+  }
+  return 'Synchronisation activée.';
+}
+function statutErreur(e) { if (e instanceof TypeError) statut('horsligne'); else statut('erreur', messageErreur(e)); }
+
+function appliquerDistant(donnees, version) {
+  const minuteur = etat.minuteur;
+  etat = normaliser(donnees);
+  etat.minuteur = minuteur;
+  etat.modifieLe = version;
+  ui.tacheOuverte = ui.habitudeEditee = ui.objectifEdite = null;
+  ecrireLocal();
+  rendreTout();
+}
+async function envoyer() {
+  if (!sync) return;
+  try {
+    statut('encours');
+    if (!etat.modifieLe) etat.modifieLe = Date.now();
+    const v = await rpc('ecrire_coffre', { p_id: sync.id, p_donnees: await chiffrer({ ...etat, minuteur: null }), p_version: etat.modifieLe });
+    if (v === null) return await recevoir(); // une version plus récente existe en ligne
+    statut('ok');
+  } catch (e) { statutErreur(e); }
+}
+async function recevoir() {
+  if (!sync) return;
+  try {
+    statut('encours');
+    const lignes = await rpc('lire_coffre', { p_id: sync.id });
+    const r = lignes && lignes[0];
+    const local = etat.modifieLe || 0;
+    if (!r || r.version < local) return await envoyer();
+    if (r.version > local) {
+      const d = await dechiffrer(r.donnees);
+      if (!formatValide(d)) throw new Error('les données en ligne sont illisibles');
+      appliquerDistant(d, r.version);
+    }
+    statut('ok');
+  } catch (e) { statutErreur(e); }
+}
+function programmerEnvoi() {
+  if (!sync) return;
+  clearTimeout(minuteurEnvoi);
+  minuteurEnvoi = setTimeout(() => { minuteurEnvoi = null; enFile(envoyer); }, 1200);
+}
+function envoyerTout() { if (minuteurEnvoi) { clearTimeout(minuteurEnvoi); minuteurEnvoi = null; enFile(envoyer); } }
+
+/* ----- Fenêtre « Synchronisation » ----- */
+function ouvrirReglages() { ui.reglages = { etape: null, erreur: '', enCours: false, saisie: { url: '', api: '' } }; rendreReglages(); }
+function rendreReglages() {
+  const el = $('#reglages'), R = ui.reglages;
+  if (!R) { el.hidden = true; el.innerHTML = ''; if (!ui.assistant) document.body.classList.remove('bloque'); return; }
+  el.hidden = false; document.body.classList.add('bloque');
+  let c = '';
+  if (R.etape === 'choix') {
+    const quand = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU, day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(R.distant.version));
+    c += `<p class="intro">Des données existent déjà en ligne (dernière modification le ${esc(quand)}). Que veux-tu faire sur cet appareil ?</p>
+      <div class="pile">
+        <button class="btn-jaune" data-action="sync-distant">Récupérer les données en ligne<small>remplace ce qu’il y a sur cet appareil</small></button>
+        <button data-action="sync-local">Envoyer les données de cet appareil<small>remplace ce qu’il y a en ligne</small></button>
+      </div>`;
+  } else if (R.etape === 'premier') {
+    c += `<p class="intro">Aucune donnée n’est encore en ligne pour cette phrase secrète.</p>
+      <div class="pile">
+        <button class="btn-jaune" data-action="sync-local">C’est mon premier appareil<small>envoyer les données de cet appareil</small></button>
+        <button data-action="sync-retour">J’ai déjà connecté un autre appareil<small>la phrase secrète doit être différente : la ressaisir</small></button>
+      </div>`;
+  } else if (sync) {
+    c += `<p class="intro">Cet appareil est synchronisé. Tes données sont chiffrées avec ta phrase secrète avant de partir : Supabase ne peut pas les lire.</p>
+      <p class="statut-sync" data-statut-sync>${esc(texteStatut())}</p>
+      <div class="pile">
+        <button class="btn-jaune" data-action="sync-maintenant">Synchroniser maintenant</button>
+        <button class="btn-danger" data-action="sync-deconnecter">Déconnecter cet appareil<small>tes données restent sur l’appareil</small></button>
+      </div>
+      <p class="secondaire">Projet : ${esc(sync.url)}</p>`;
+  } else {
+    c += `<p class="intro">Relie cet appareil à ton projet Supabase. Utilise exactement les mêmes informations sur ton iPhone et ton ordinateur.</p>
+      <form class="formulaire-sync" data-action="sync-connecter" autocomplete="off" novalidate>
+        <label class="etiquette" for="sync-url">Adresse du projet (Project URL)</label>
+        <input type="url" id="sync-url" name="url" data-fk="sync-url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://abcdefgh.supabase.co" value="${esc(R.saisie.url)}">
+        <label class="etiquette" for="sync-api">Clé publique (publishable ou anon)</label>
+        <input type="text" id="sync-api" name="api" data-fk="sync-api" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sb_publishable_… ou eyJ…" value="${esc(R.saisie.api)}">
+        <label class="etiquette" for="sync-phrase">Phrase secrète</label>
+        <input type="password" id="sync-phrase" name="phrase" autocomplete="new-password" placeholder="Au moins 12 caractères">
+        <p class="secondaire" style="margin-top:6px">La même sur tous tes appareils. Note-la en lieu sûr : sans elle, personne (pas même toi) ne peut relire les données en ligne.</p>
+        ${R.erreur ? `<p class="erreur-sync" role="alert">${esc(R.erreur)}</p>` : ''}
+        <button type="submit" class="btn-jaune" ${R.enCours ? 'disabled' : ''}>${R.enCours ? 'Connexion…' : 'Connecter'}</button>
+      </form>`;
+  }
+  el.innerHTML = `<div class="modale-boite" role="dialog" aria-modal="true" aria-labelledby="titre-reglages">
+    <div class="modale-haut"><h2 id="titre-reglages">Synchronisation</h2>
+      <button class="btn-icone" data-action="sync-fermer" aria-label="Fermer">${ico('croix')}</button></div>
+    <div class="modale-corps">${c}</div></div>`;
+}
+async function connecter(f) {
+  const R = ui.reglages;
+  let url = f.url.value.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
+  if (url && !/^[a-z]+:\/\//i.test(url)) url = 'https://' + url; // adresse collée sans https://
+  const api = f.api.value.trim(), phrase = f.phrase.value;
+  R.saisie = { url, api }; R.erreur = ''; R.distant = null; R.conf = null;
+  if (!/^https:\/\/\S+$/i.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url)) R.erreur = 'L’adresse doit commencer par https:// (par exemple https://abcdefgh.supabase.co).';
+  else if (!api) R.erreur = 'Colle la clé publique de ton projet.';
+  else if (phrase.length < 12) R.erreur = 'La phrase secrète doit faire au moins 12 caractères.';
+  if (R.erreur) { rendreReglages(); return; }
+  R.enCours = true; rendreReglages();
+  try {
+    const d = await deriver(phrase);
+    const conf = { url, api, id: d.id, k: d.k };
+    let lignes;
+    try { lignes = await rpc('lire_coffre', { p_id: conf.id }, conf); } catch (e) { throw new Error(messageErreur(e)); }
+    const r = lignes && lignes[0];
+    if (r) {
+      let donnees;
+      try { donnees = await dechiffrer(r.donnees, conf); } catch (e) { throw new Error('Impossible de lire les données en ligne avec cette phrase secrète.'); }
+      if (!formatValide(donnees)) throw new Error('Les données en ligne sont illisibles.');
+      R.conf = conf; R.distant = { donnees, version: r.version }; R.etape = 'choix';
+    } else {
+      R.conf = conf; R.etape = 'premier';
+    }
+  } catch (e) { R.erreur = e.message; }
+  R.enCours = false; rendreReglages(); rendrePied();
+}
+
 function effacerExemples() {
   if (!confirm('Effacer toutes les données d’exemple ? Ce que tu as ajouté toi-même est conservé.')) return;
   const garder = x => !x.exemple;
@@ -1473,7 +1690,33 @@ const clics = {
     if (A.etape < 4) { A.etape++; A.garderDefilement = false; }
     rendreTout();
   },
-  'assist-valider': () => validerAssistant()
+  'assist-valider': () => validerAssistant(),
+  'sync-ouvrir': () => ouvrirReglages(),
+  'sync-fermer': () => { ui.reglages = null; rendreReglages(); },
+  'sync-retour': () => { const R = ui.reglages; R.etape = null; R.conf = null; R.erreur = 'Vérifie la phrase secrète : elle doit être identique à celle de ton autre appareil (majuscules et espaces compris).'; rendreReglages(); },
+  'sync-distant': () => {
+    const R = ui.reglages;
+    sync = R.conf; sauverSync();
+    appliquerDistant(R.distant.donnees, R.distant.version);
+    statut('ok');
+    R.etape = null; rendreReglages(); rendrePied();
+  },
+  'sync-local': async () => {
+    const R = ui.reglages;
+    sync = R.conf; sauverSync();
+    // Cette version doit passer devant celle en ligne
+    etat.modifieLe = Math.max(Date.now(), R.distant ? R.distant.version + 1 : 0);
+    ecrireLocal();
+    R.etape = null; rendreReglages();
+    await enFile(envoyer);
+    rendreReglages(); rendrePied();
+  },
+  'sync-maintenant': async () => { await enFile(recevoir); rendreReglages(); rendrePied(); },
+  'sync-deconnecter': () => {
+    if (!confirm('Déconnecter cet appareil de la synchronisation ? Tes données restent sur cet appareil.')) return;
+    sync = null; sauverSync(); ui.sync = null;
+    ui.reglages.etape = null; rendreReglages(); rendrePied();
+  }
 };
 
 function deplacerEtape(el, sens) {
@@ -1579,6 +1822,7 @@ function ajuster(el) { if (!tailleAuto) return; el.style.height = 'auto'; el.sty
 function ajusterTout() { document.querySelectorAll('textarea.auto').forEach(ajuster); }
 document.addEventListener('input', e => {
   if (e.target.matches && e.target.matches('textarea.auto')) ajuster(e.target);
+  if (ui.reglages && (e.target.id === 'sync-url' || e.target.id === 'sync-api')) ui.reglages.saisie[e.target.name] = e.target.value;
   const el = e.target, A = ui.assistant;
   if (!A || !el.dataset) return;
   if (el.dataset.action === 'assist-saisie') A.saisies[el.dataset.id] = el.value;
@@ -1586,6 +1830,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('submit', e => {
   const f = e.target;
+  if (f.dataset.action === 'sync-connecter') { e.preventDefault(); connecter(f); return; }
   const action = formulaires[f.dataset.action];
   if (!action) return;
   e.preventDefault();
@@ -1595,6 +1840,7 @@ document.addEventListener('submit', e => {
   sauver(); rendreTout();
 });
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && ui.reglages) { ui.reglages = null; rendreReglages(); return; }
   if (e.key === 'Escape' && ui.assistant) { ui.assistant = null; rendreTout(); }
   if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-action$="-renommer"], input[data-action="assist-saisie"], input[data-action="assist-note"]')) {
     e.preventDefault(); e.target.blur();
@@ -1616,6 +1862,7 @@ window.addEventListener('resize', majSectionActive);
 /* =====================================================================
    DÉMARRAGE
    ===================================================================== */
+chargerSync();
 charger();
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().catch(() => {});
@@ -1625,7 +1872,15 @@ rendreTout();
 majSectionActive();
 mettreAJourBadge();
 setInterval(tic, 1000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { tic(); mettreAJourBadge(); } });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) { tic(); mettreAJourBadge(); if (sync) enFile(recevoir); }
+  else envoyerTout(); // l'app passe en arrière-plan : on envoie tout de suite
+});
+window.addEventListener('pagehide', envoyerTout);
+window.addEventListener('online', () => { if (sync) enFile(recevoir); });
+// Récupère les changements faits sur l'autre appareil : à l'ouverture, puis chaque minute
+if (sync) enFile(recevoir);
+setInterval(() => { if (sync && !document.hidden && !minuteurEnvoi) enFile(recevoir); }, 60000);
 window.addEventListener('pageshow', () => tic());
 </script>
 </body>
