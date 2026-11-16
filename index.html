@@ -54,8 +54,9 @@
   .chiffre { font-family: var(--tableau); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 
   /* ---------- Structure ---------- */
+  html, body { min-height: 100%; }
   .page {
-    max-width: 1240px; margin: 0 auto;
+    width: 100%; margin: 0;
     padding: 0 calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 40px) calc(env(safe-area-inset-left) + 16px);
   }
   .colonnes { display: grid; gap: 16px; }
