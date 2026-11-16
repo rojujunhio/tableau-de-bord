@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tableau de bord">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<title>Tableau de bord</title>
+<style>
+  :root {
+    --fond: #121212;
+    --carte: #1C1C1E;
+    --carte2: #2C2C2E;
+    --ligne: #3A3A3C;
+    --texte: #EDEDED;
+    --texte2: #8E8E93;
+    --accent: #FF8A3D;
+    --rayon: 16px;
+    --coche: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%23121212' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--fond); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font: 17px/1.4 -apple-system, "SF Pro Text", "SF Pro", system-ui, "Helvetica Neue", Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    overflow-wrap: anywhere;
+  }
+  body.bloque { overflow: hidden; }
+  #app {
+    max-width: 640px;
+    margin: 0 auto;
+    padding:
+      calc(env(safe-area-inset-top) + 16px)
+      calc(env(safe-area-inset-right) + 16px)
+      calc(env(safe-area-inset-bottom) + 40px)
+      calc(env(safe-area-inset-left) + 16px);
+  }
+  h1 { font-size: 30px; line-height: 1.15; margin: 0; font-weight: 700; letter-spacing: -0.01em; }
+  h2 { font-size: 20px; margin: 0; font-weight: 700; }
+  p { margin: 0; }
+  ul, ol { list-style: none; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+
+  /* ----- Boutons et champs ----- */
+  button {
+    font: inherit; color: var(--texte);
+    min-height: 44px; min-width: 44px;
+    padding: 0 16px;
+    border: none; border-radius: 12px;
+    background: var(--carte2);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:disabled { opacity: 0.4; cursor: default; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--texte2); outline-offset: 2px; }
+  .btn-principal { background: var(--texte); color: var(--fond); font-weight: 600; }
+  .btn-lien { background: transparent; color: var(--texte2); padding: 0 8px; }
+  .btn-icone { padding: 0; width: 44px; font-size: 18px; color: var(--texte2); background: transparent; flex: none; }
+  .btn-accent { background: var(--accent); color: #121212; font-weight: 600; }
+  .btn-accent-contour { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); font-weight: 600; }
+  .btn-large { width: 100%; }
+  input[type=text], select {
+    font: inherit; font-size: 17px; color: var(--texte);
+    min-height: 44px; width: 100%;
+    padding: 0 12px;
+    background: var(--carte2);
+    border: 1px solid transparent; border-radius: 12px;
+    -webkit-appearance: none; appearance: none;
+  }
+  select {
+    padding-right: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5' fill='none' stroke='%238E8E93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;
+  }
+  input::placeholder { color: var(--texte2); }
+  input[type=checkbox] {
+    -webkit-appearance: none; appearance: none;
+    width: 26px; height: 26px; margin: 0; flex: none;
+    border: 2px solid var(--texte2); border-radius: 8px;
+    background: transparent; cursor: pointer;
+  }
+  input[type=checkbox]:checked { background: var(--texte) var(--coche) center / 18px no-repeat; border-color: var(--texte); }
+  input[type=checkbox]:disabled { opacity: 0.3; cursor: default; }
+  .case { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; cursor: pointer; flex: none; }
+  .ligne-form { display: flex; gap: 8px; align-items: center; }
+  .ligne-form input { flex: 1; min-width: 0; }
+  .etiquette { display: block; font-size: 14px; color: var(--texte2); margin: 12px 0 6px; }
+  .secondaire { color: var(--texte2); font-size: 15px; }
+  .vide { color: var(--texte2); padding: 8px 0; }
+
+  /* ----- Cartes ----- */
+  .carte { background: var(--carte); border-radius: var(--rayon); padding: 16px; margin-bottom: 16px; }
+  .titre-bloc { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; min-height: 44px; }
+  .titre-bloc h2 { flex: 1; }
+  .compteur { color: var(--texte2); font-weight: 400; font-size: 17px; }
+
+  /* ----- Bandeau d'alerte ----- */
+  #alerte { background: var(--carte2); border-radius: var(--rayon); padding: 12px 12px 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  #alerte p { flex: 1; font-size: 15px; }
+
+  /* ----- En-tête ----- */
+  #entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 8px 0 20px; }
+  #entete .petit { color: var(--texte2); font-size: 15px; margin-bottom: 2px; }
+  .btn-demain { background: var(--carte); color: var(--accent); font-weight: 600; border: 1.5px solid var(--carte2); }
+  .btn-demain.fort { background: var(--accent); color: #121212; border-color: var(--accent); }
+
+  /* ----- Priorités (seul bloc orange) ----- */
+  #priorites { border: 1.5px solid var(--accent); }
+  #priorites h2 { color: var(--accent); }
+  #priorites input[type=checkbox] { border-color: var(--accent); }
+  #priorites input[type=checkbox]:checked { background-color: var(--accent); border-color: var(--accent); }
+  .prio { display: flex; gap: 4px; padding: 8px 0; border-top: 1px solid var(--carte2); }
+  .prio:first-child { border-top: none; padding-top: 0; }
+  .prio-num { flex: none; width: 28px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-weight: 700; font-size: 20px; }
+  .prio-corps { flex: 1; min-width: 0; }
+  .prio-tache { color: var(--texte2); font-size: 14px; padding-top: 2px; }
+  .prio-ligne { display: flex; align-items: center; gap: 4px; cursor: pointer; min-height: 44px; }
+  .prio-ligne .case { margin-left: -9px; }
+  .prio-etape { font-size: 19px; font-weight: 600; line-height: 1.3; }
+  .prio-progres { color: var(--texte2); font-size: 14px; }
+  .prio.fini .prio-etape { color: var(--texte2); text-decoration: line-through; font-weight: 400; }
+  .prio.fini .prio-num { color: var(--texte2); }
+  .prio-fini-ligne { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+  .minuteur { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .minuteur-temps { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .minuteur-zone { margin-top: 8px; }
+  .fin-minuteur { background: var(--accent); color: #121212; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+  .fin-minuteur p { flex: 1; font-weight: 600; }
+  .fin-minuteur button { background: #121212; color: var(--texte); }
+  .note { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--carte2); }
+  .note strong { color: var(--accent); font-weight: 600; }
+  .bravo { margin-top: 8px; color: var(--texte); font-weight: 600; }
+
+  /* ----- Listes ----- */
+  .item { display: flex; align-items: center; gap: 4px; padding: 4px 0; border-top: 1px solid var(--carte2); }
+  .item:first-child { border-top: none; }
+  .item-texte { flex: 1; min-width: 0; padding: 8px 0; }
+  .liste { margin-top: 8px; }
+
+  /* ----- Tâches ----- */
+  .groupe { margin-top: 16px; }
+  .groupe:first-of-type { margin-top: 4px; }
+  .groupe-titre { font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--texte2); margin-bottom: 4px; font-weight: 600; }
+  .tache { border-top: 1px solid var(--carte2); }
+  .tache:first-of-type { border-top: none; }
+  .tache-ligne { display: flex; align-items: center; gap: 2px; }
+  .tache-ligne .case { margin-left: -9px; }
+  .pastille { flex: none; min-width: 44px; height: 44px; margin-left: -9px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--texte2); font-variant-numeric: tabular-nums; }
+  .tache-titre { flex: 1; min-width: 0; text-align: left; background: transparent; padding: 8px 4px; border-radius: 8px; }
+  .tache-titre small { display: block; color: var(--texte2); font-size: 14px; }
+  .tache.faite .tache-titre > span { color: var(--texte2); text-decoration: line-through; }
+  .editeur { background: var(--fond); border-radius: 12px; padding: 4px 12px 12px; margin: 4px 0 12px; }
+  .etape { display: flex; align-items: center; flex-wrap: wrap; padding: 2px 0; }
+  .etape + .etape { border-top: 1px solid var(--carte); }
+  .etape .case { margin-left: -9px; }
+  .etape input[type=text] { flex: 1 1 200px; min-width: 0; }
+  .etape .controles { display: flex; margin-left: auto; }
+  .actions-editeur { display: flex; gap: 8px; margin-top: 12px; }
+  .actions-editeur button { flex: 1; }
+  .nouvelle-tache { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .nouvelle-tache input { grid-column: 1 / -1; }
+
+  /* ----- Habitudes ----- */
+  .grille { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .grille .case { min-width: 0; width: 100%; }
+  .jour-entete { text-align: center; font-size: 12px; color: var(--texte2); line-height: 1.2; padding-bottom: 4px; }
+  .jour-entete.auj { color: var(--texte); font-weight: 700; }
+  .habitude { border-top: 1px solid var(--carte2); padding-top: 4px; margin-top: 4px; }
+  .habitude-haut { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  .habitude-nom { flex: 1; min-width: 0; font-weight: 600; }
+  .serie { color: var(--texte2); font-size: 14px; white-space: nowrap; }
+
+  /* ----- Objectifs ----- */
+  .objectif { border-top: 1px solid var(--carte2); padding: 8px 0; }
+  .objectif:first-child { border-top: none; padding-top: 0; }
+  .objectif-haut { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  .objectif-titre { flex: 1; min-width: 0; font-weight: 600; }
+  .barre { height: 8px; background: var(--carte2); border-radius: 4px; overflow: hidden; margin: 4px 0 6px; }
+  .barre > div { height: 100%; background: var(--texte); border-radius: 4px; }
+
+  /* ----- Pied de page ----- */
+  #pied { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
+  #pied .info { grid-column: 1 / -1; color: var(--texte2); font-size: 14px; text-align: center; margin-top: 8px; }
+  #pied .plein { grid-column: 1 / -1; }
+
+  /* ----- Fenêtre « Préparer demain » ----- */
+  #modale { position: fixed; inset: 0; z-index: 10; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
+  .modale-boite {
+    background: var(--fond); width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  @media (min-width: 700px) and (min-height: 600px) {
+    .modale-boite { width: 600px; height: min(800px, 92vh); border-radius: 20px; border: 1px solid var(--carte2); }
+  }
+  .modale-haut { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px 8px; border-bottom: 1px solid var(--carte2); }
+  .modale-haut .petit { color: var(--texte2); font-size: 14px; }
+  .modale-corps { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; }
+  .modale-corps > p.intro { color: var(--texte2); margin-bottom: 12px; }
+  .modale-bas { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--carte2); }
+  .modale-bas button { flex: 1; }
+  .choix { display: flex; align-items: center; gap: 4px; cursor: pointer; border-top: 1px solid var(--carte2); min-height: 52px; }
+  .choix .case { margin-left: -9px; }
+  .choix.desactive { opacity: 0.45; cursor: default; }
+  .bloc-assist { background: var(--carte); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+  .bloc-assist .titre-t { font-weight: 600; }
+  .limite { color: var(--texte); font-size: 15px; margin: 8px 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="alerte" hidden></div>
+  <header id="entete"></header>
+  <section id="priorites" class="carte" aria-labelledby="titre-prio"></section>
+  <section id="capture" class="carte"></section>
+  <section id="taches" class="carte"></section>
+  <section id="habitudes" class="carte"></section>
+  <section id="objectifs" class="carte"></section>
+  <footer id="pied"></footer>
+</div>
+<div id="modale" hidden></div>
+<input type="file" id="fichier-import" accept=".json,application/json" hidden>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   RÉGLAGES
+   ===================================================================== */
+const CLE_STOCKAGE = 'tdb-v1';   // nom unique sous lequel tout est enregistré
+const VERSION = 1;
+const FUSEAU = 'Europe/Paris';
+const MAX_PRIORITES = 3;
+const MAX_OBJECTIFS = 3;
+const DUREE_MINUTEUR = 25 * 60 * 1000;
+const JOURS_AVANT_ALERTE = 7;
+
+/* =====================================================================
+   DATES — toujours calculées à l'heure de Paris
+   Une date est écrite "AAAA-MM-JJ" (ex. "2026-11-16").
+   ===================================================================== */
+const formatParis = new Intl.DateTimeFormat('en-GB', {
+  timeZone: FUSEAU, year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+});
+function maintenant() {
+  const p = {};
+  for (const x of formatParis.formatToParts(new Date())) p[x.type] = x.value;
+  return { jour: `${p.year}-${p.month}-${p.day}`, heure: Number(p.hour) };
+}
+function aujourdhui() { return maintenant().jour; }
+// Calcul de calendrier pur (ajouter n jours à une date) : aucune heure en jeu.
+function decaler(jour, n) {
+  const [a, m, j] = jour.split('-').map(Number);
+  const d = new Date(Date.UTC(a, m - 1, j + n));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+function ecartJours(de, a) {
+  const t = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+  return Math.round((t(a) - t(de)) / 86400000);
+}
+function formatJour(jour, options) {
+  const [a, m, j] = jour.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { ...options, timeZone: 'UTC' }).format(new Date(Date.UTC(a, m - 1, j)));
+}
+function majuscule(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+/* =====================================================================
+   OUTILS
+   ===================================================================== */
+function nouvelId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+const $ = sel => document.querySelector(sel);
+function pluriel(n, mot) { return `${n} ${mot}${n > 1 ? 's' : ''}`; }
+
+/* =====================================================================
+   DONNÉES
+   ===================================================================== */
+let etat;
+const ui = {
+  tacheOuverte: null, habitudeEditee: null, objectifEdite: null,
+  assistant: null, minuteurFini: false, repereAffiche: '', alerteStockage: false
+};
+
+function etatVide() {
+  return {
+    version: VERSION, objectifs: [], taches: [], habitudes: [], capture: [],
+    priorites: {}, minuteur: null, dernierExport: null
+  };
+}
+
+function donneesExemple() {
+  const a = aujourdhui();
+  const ex = { exemple: true };
+  const o1 = { id: nouvelId(), titre: 'Courir un semi-marathon en avril', ...ex };
+  const o2 = { id: nouvelId(), titre: 'Lancer mon site de photos', ...ex };
+  const o3 = { id: nouvelId(), titre: 'Remettre de l’ordre dans mes finances', ...ex };
+  const t = (titre, obj, etapes = [], faite = false) => ({
+    id: nouvelId(), titre, objectif: obj ? obj.id : null, faite,
+    etapes: etapes.map(([texte, f]) => ({ id: nouvelId(), texte, faite: !!f })), ...ex
+  });
+  const t1 = t('Établir mon plan d’entraînement', o1, [['Choisir un programme sur 12 semaines', 1], ['Bloquer les 3 séances de la semaine dans mon agenda'], ['Acheter des chaussures de running']]);
+  const t2 = t('M’inscrire au semi-marathon', o1);
+  const t3 = t('Choisir mes 20 meilleures photos', o2, [['Trier le dossier 2025', 1], ['Trier le dossier 2026'], ['Faire la sélection finale']]);
+  const t4 = t('Écrire la page « À propos »', o2, [['Écrire un premier jet de 10 lignes'], ['Choisir une photo de profil']]);
+  const t5 = t('Comparer 3 hébergeurs de site', o2, [], true);
+  const t6 = t('Faire mon budget de décembre', o3, [['Télécharger les relevés de novembre', 1], ['Classer les dépenses par catégorie'], ['Fixer un plafond par catégorie']]);
+  const t7 = t('Résilier l’abonnement que je n’utilise plus', o3);
+  const t8 = t('Prendre rendez-vous chez le dentiste', null);
+  // Historique des habitudes : 7 caractères, du jour J-6 (gauche) à aujourd'hui (droite)
+  const h = (nom, motif) => {
+    const jours = {};
+    [...motif].forEach((c, i) => { if (c === '1') jours[decaler(a, i - 6)] = true; });
+    return { id: nouvelId(), nom, jours, ...ex };
+  };
+  const c = texte => ({ id: nouvelId(), texte, ...ex });
+  return {
+    ...etatVide(),
+    objectifs: [o1, o2, o3],
+    taches: [t1, t2, t3, t4, t5, t6, t7, t8],
+    habitudes: [h('Boire 1,5 L d’eau', '1111110'), h('Lire 20 minutes', '0111111'), h('Méditer 10 minutes', '1011010'), h('Pas d’écran après 23 h', '1101100')],
+    capture: [c('Idée : une série de photos en noir et blanc'), c('Appeler Maman dimanche'), c('Comparer les assurances habitation')],
+    priorites: { [a]: { taches: [t1.id, t3.id, t8.id], note: 'Rapporter le colis à la Poste avant 19 h', ...ex } }
+  };
+}
+
+// Vérifie qu'un objet a bien la forme des données du tableau de bord.
+function formatValide(d) {
+  const estObjet = x => x && typeof x === 'object' && !Array.isArray(x);
+  const chaine = x => typeof x === 'string';
+  if (!estObjet(d) || d.version !== VERSION) return false;
+  for (const k of ['objectifs', 'taches', 'habitudes', 'capture']) if (!Array.isArray(d[k])) return false;
+  if (!estObjet(d.priorites)) return false;
+  if (!d.objectifs.every(o => estObjet(o) && chaine(o.id) && chaine(o.titre))) return false;
+  if (!d.taches.every(t => estObjet(t) && chaine(t.id) && chaine(t.titre) && Array.isArray(t.etapes) &&
+      t.etapes.every(e => estObjet(e) && chaine(e.id) && chaine(e.texte)))) return false;
+  if (!d.habitudes.every(h => estObjet(h) && chaine(h.id) && chaine(h.nom) && estObjet(h.jours))) return false;
+  if (!d.capture.every(c => estObjet(c) && chaine(c.id) && chaine(c.texte))) return false;
+  if (!Object.entries(d.priorites).every(([j, p]) => /^\d{4}-\d{2}-\d{2}$/.test(j) && estObjet(p) && Array.isArray(p.taches))) return false;
+  return true;
+}
+
+function normaliser(d) {
+  const e = { ...etatVide(), ...d };
+  e.taches.forEach(t => { t.objectif = t.objectif || null; t.faite = !!t.faite; t.etapes.forEach(x => { x.faite = !!x.faite; }); });
+  Object.values(e.priorites).forEach(p => { p.note = typeof p.note === 'string' ? p.note : ''; });
+  if (e.minuteur && typeof e.minuteur.fin !== 'number') e.minuteur = null;
+  if (e.dernierExport && !/^\d{4}-\d{2}-\d{2}$/.test(e.dernierExport)) e.dernierExport = null;
+  // On ne garde que 60 jours d'historique de priorités
+  const limite = decaler(aujourdhui(), -60);
+  for (const j of Object.keys(e.priorites)) if (j < limite) delete e.priorites[j];
+  return e;
+}
+
+function charger() {
+  let brut = null;
+  try { brut = localStorage.getItem(CLE_STOCKAGE); } catch (e) { /* stockage indisponible */ }
+  if (brut === null) { etat = donneesExemple(); sauver(); return; }
+  try {
+    const d = JSON.parse(brut);
+    if (!formatValide(d)) throw new Error('format');
+    etat = normaliser(d);
+  } catch (e) {
+    // Données illisibles : on les met de côté au lieu de les écraser.
+    try { localStorage.setItem(CLE_STOCKAGE + '-illisible', brut); } catch (_) {}
+    etat = etatVide();
+    alert('Les données enregistrées sont illisibles. Une copie a été mise de côté et le tableau de bord repart à zéro. Tu peux importer ta dernière sauvegarde.');
+    sauver();
+  }
+}
+
+function sauver() {
+  try {
+    localStorage.setItem(CLE_STOCKAGE, JSON.stringify(etat));
+  } catch (e) {
+    if (!ui.alerteStockage) {
+      ui.alerteStockage = true;
+      alert('Impossible d’enregistrer sur cet appareil (navigation privée ou stockage plein). Exporte tes données pour ne rien perdre.');
+    }
+  }
+  mettreAJourBadge();
+}
+
+// Raccourcis
+const tache = id => etat.taches.find(t => t.id === id);
+const objectif = id => etat.objectifs.find(o => o.id === id);
+const habitude = id => etat.habitudes.find(h => h.id === id);
+const tacheFinie = t => t.etapes.length ? t.etapes.every(e => e.faite) : t.faite;
+const prochaineEtape = t => t.etapes.find(e => !e.faite);
+function prioritesDuJour(jour = aujourdhui()) {
+  const p = etat.priorites[jour];
+  return p ? p.taches.map(tache).filter(Boolean) : [];
+}
+function serie(h) {
+  let j = aujourdhui();
+  if (!h.jours[j]) j = decaler(j, -1);
+  let n = 0;
+  while (h.jours[j]) { n++; j = decaler(j, -1); }
+  return n;
+}
+function aDesExemples() {
+  return ['objectifs', 'taches', 'habitudes', 'capture'].some(k => etat[k].some(x => x.exemple)) ||
+    Object.values(etat.priorites).some(p => p.exemple);
+}
+
+/* =====================================================================
+   AFFICHAGE
+   ===================================================================== */
+function rendreTout() {
+  const actif = document.activeElement;
+  const cleFocus = actif && actif.dataset ? actif.dataset.fk : null;
+  const corps = $('.modale-corps');
+  const defil = corps ? corps.scrollTop : 0;
+  const n = maintenant();
+  ui.repereAffiche = n.jour + (n.heure >= 18 ? '-soir' : '-jour');
+
+  rendreAlerte(); rendreEntete(n); rendrePriorites(); rendreCapture();
+  rendreTaches(); rendreHabitudes(); rendreObjectifs(); rendrePied(); rendreAssistant();
+
+  const nouveauCorps = $('.modale-corps');
+  if (nouveauCorps && ui.assistant && ui.assistant.garderDefilement) nouveauCorps.scrollTop = defil;
+  if (ui.assistant) ui.assistant.garderDefilement = true;
+  if (cleFocus) { const el = document.querySelector(`[data-fk="${cleFocus}"]`); if (el) el.focus({ preventScroll: true }); }
+}
+
+function rendreAlerte() {
+  const el = $('#alerte');
+  const j = aujourdhui();
+  const ecart = etat.dernierExport ? ecartJours(etat.dernierExport, j) : null;
+  if (ecart !== null && ecart <= JOURS_AVANT_ALERTE) { el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  const msg = ecart === null
+    ? 'Aucune sauvegarde pour l’instant — exporte tes données'
+    : `Dernière sauvegarde il y a ${ecart} jours — exporte tes données`;
+  el.innerHTML = `<p>${msg}</p><button class="btn-principal" data-action="exporter">Exporter</button>`;
+}
+
+function rendreEntete(n) {
+  const soir = n.heure >= 18;
+  $('#entete').innerHTML = `
+    <div>
+      <div class="petit">${soir ? 'Bonsoir' : 'Bonjour'}</div>
+      <h1>${esc(majuscule(formatJour(n.jour, { weekday: 'long', day: 'numeric', month: 'long' })))}</h1>
+    </div>
+    <button class="btn-demain${soir ? ' fort' : ''}" data-action="preparer-demain">Préparer demain</button>`;
+}
+
+function rendrePriorites() {
+  const jour = aujourdhui();
+  const plan = etat.priorites[jour];
+  const liste = prioritesDuJour(jour);
+  let h = '';
+  if (ui.minuteurFini) {
+    h += `<div class="fin-minuteur" role="alert"><p>25 minutes écoulées ! Fais une pause.</p><button data-action="minuteur-ok">OK</button></div>`;
+  }
+  h += `<div class="titre-bloc"><h2 id="titre-prio">Mes 3 priorités du jour</h2>${liste.length ? '<button class="btn-lien" data-action="choisir-maintenant">Modifier</button>' : ''}</div>`;
+  if (!liste.length) {
+    h += `<p class="vide">Aucune priorité préparée pour aujourd’hui.</p>
+          <button class="btn-accent btn-large" data-action="choisir-maintenant">Choisis 3 tâches maintenant</button>`;
+  } else {
+    h += '<ol>';
+    liste.forEach((t, i) => {
+      const fini = tacheFinie(t);
+      const et = prochaineEtape(t);
+      h += `<li class="prio${fini ? ' fini' : ''}"><span class="prio-num">${i + 1}</span><div class="prio-corps">`;
+      if (t.etapes.length) h += `<div class="prio-tache" data-nom-tache="${t.id}">${esc(t.titre)}</div>`;
+      if (fini) {
+        h += `<div class="prio-fini-ligne"><span class="prio-etape" ${t.etapes.length ? '' : `data-nom-tache="${t.id}"`}>${t.etapes.length ? 'Terminée' : esc(t.titre)}</span>
+              <button class="btn-lien" data-action="prio-annuler" data-tache="${t.id}">Annuler</button></div>`;
+      } else {
+        const libelle = et ? et.texte : t.titre;
+        const attrNom = et ? `data-nom-etape="${et.id}"` : `data-nom-tache="${t.id}"`;
+        h += `<label class="prio-ligne"><span class="case"><input type="checkbox" data-action="prio-cocher" data-tache="${t.id}" ${et ? `data-etape="${et.id}"` : ''} aria-label="Cocher : ${esc(libelle)}"></span>
+              <span class="prio-etape" ${attrNom}>${esc(libelle)}</span></label>`;
+        if (t.etapes.length) h += `<div class="prio-progres">Prochaine étape · ${t.etapes.filter(e => e.faite).length + 1} sur ${t.etapes.length}</div>`;
+        if (i === 0) h += rendreMinuteur();
+      }
+      h += '</div></li>';
+    });
+    h += '</ol>';
+    if (liste.every(tacheFinie)) h += '<p class="bravo">Bravo, tes priorités du jour sont terminées.</p>';
+  }
+  if (plan && plan.note) h += `<p class="note"><strong>À ne pas oublier aujourd’hui :</strong> ${esc(plan.note)}</p>`;
+  $('#priorites').innerHTML = h;
+}
+
+function formatDuree(ms) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+function rendreMinuteur() {
+  const m = etat.minuteur;
+  if (m && m.fin > Date.now()) {
+    return `<div class="minuteur"><span class="minuteur-temps" id="minuteur-temps" role="timer">${formatDuree(m.fin - Date.now())}</span>
+            <button data-action="minuteur-arreter">Arrêter</button></div>`;
+  }
+  return `<div class="minuteur-zone"><button class="btn-accent-contour" data-action="minuteur-demarrer">Démarrer 25 min</button></div>`;
+}
+
+function rendreCapture() {
+  let h = `<div class="titre-bloc"><h2>Boîte de capture ${etat.capture.length ? `<span class="compteur">${etat.capture.length}</span>` : ''}</h2></div>
+    <form class="ligne-form" data-action="capture-ajouter">
+      <input type="text" name="texte" data-fk="capture" placeholder="Une idée, une chose à faire…" enterkeyhint="done" autocomplete="off" aria-label="Nouvel élément à capturer">
+      <button type="submit" class="btn-icone" aria-label="Ajouter">＋</button>
+    </form>`;
+  h += etat.capture.length ? `<ul class="liste">${etat.capture.map(itemCapture).join('')}</ul>` : '<p class="vide">Rien à trier.</p>';
+  $('#capture').innerHTML = h;
+}
+function itemCapture(c) {
+  return `<li class="item"><span class="item-texte">${esc(c.texte)}</span>
+    <button data-action="capture-tache" data-id="${c.id}">En tâche</button>
+    <button class="btn-icone" data-action="capture-suppr" data-id="${c.id}" aria-label="Supprimer « ${esc(c.texte)} »">✕</button></li>`;
+}
+
+function optionsObjectifs(choisi) {
+  return `<option value="">Sans objectif</option>` +
+    etat.objectifs.map(o => `<option value="${o.id}" ${o.id === choisi ? 'selected' : ''} data-nom-objectif="${o.id}">${esc(o.titre)}</option>`).join('');
+}
+
+function rendreTaches() {
+  const restantes = etat.taches.filter(t => !tacheFinie(t)).length;
+  let h = `<div class="titre-bloc"><h2>Mes tâches <span class="compteur">${restantes}</span></h2></div>
+    <form class="nouvelle-tache" data-action="tache-ajouter">
+      <input type="text" name="titre" data-fk="nouvelle-tache" placeholder="Nouvelle tâche…" enterkeyhint="done" autocomplete="off" aria-label="Nouvelle tâche">
+      <select name="objectif" aria-label="Objectif de la nouvelle tâche">${optionsObjectifs(null)}</select>
+      <button type="submit" class="btn-principal">Ajouter</button>
+    </form>`;
+  const groupes = etat.objectifs.map(o => ({ id: o.id, titre: o.titre, taches: etat.taches.filter(t => t.objectif === o.id) }));
+  const ids = new Set(etat.objectifs.map(o => o.id));
+  groupes.push({ id: null, titre: 'Sans objectif', taches: etat.taches.filter(t => !t.objectif || !ids.has(t.objectif)) });
+  for (const g of groupes) {
+    if (!g.taches.length && g.id === null) continue;
+    const triees = [...g.taches.filter(t => !tacheFinie(t)), ...g.taches.filter(tacheFinie)];
+    h += `<div class="groupe"><div class="groupe-titre" ${g.id ? `data-nom-objectif="${g.id}"` : ''}>${esc(g.titre)}</div>`;
+    h += triees.length ? triees.map(rendreTache).join('') : '<p class="vide">Aucune tâche.</p>';
+    h += '</div>';
+  }
+  $('#taches').innerHTML = h;
+}
+
+function rendreTache(t) {
+  const fini = tacheFinie(t);
+  const ouverte = ui.tacheOuverte === t.id;
+  const et = prochaineEtape(t);
+  let h = `<div class="tache${fini ? ' faite' : ''}"><div class="tache-ligne">`;
+  if (t.etapes.length) {
+    h += `<span class="pastille" aria-label="${t.etapes.filter(e => e.faite).length} étapes faites sur ${t.etapes.length}">${t.etapes.filter(e => e.faite).length}/${t.etapes.length}</span>`;
+  } else {
+    h += `<label class="case"><input type="checkbox" data-action="tache-cocher" data-id="${t.id}" ${t.faite ? 'checked' : ''} aria-label="Terminer : ${esc(t.titre)}"></label>`;
+  }
+  h += `<button class="tache-titre" data-action="tache-ouvrir" data-id="${t.id}" aria-expanded="${ouverte}">
+          <span data-nom-tache="${t.id}">${esc(t.titre)}</span>
+          ${et && !ouverte ? `<small>Prochaine étape : <span data-nom-etape="${et.id}">${esc(et.texte)}</span></small>` : ''}
+        </button></div>`;
+  if (ouverte) {
+    h += `<div class="editeur">
+      <label class="etiquette" for="nom-${t.id}">Nom de la tâche</label>
+      <input type="text" id="nom-${t.id}" value="${esc(t.titre)}" data-action="tache-renommer" data-id="${t.id}" enterkeyhint="done" autocomplete="off">
+      <label class="etiquette" for="obj-${t.id}">Objectif</label>
+      <select id="obj-${t.id}" data-action="tache-objectif" data-id="${t.id}">${optionsObjectifs(t.objectif)}</select>
+      <div class="etiquette">Étapes</div>`;
+    t.etapes.forEach((e, i) => {
+      h += `<div class="etape">
+        <label class="case"><input type="checkbox" data-action="etape-cocher" data-id="${t.id}" data-etape="${e.id}" ${e.faite ? 'checked' : ''} aria-label="Étape faite : ${esc(e.texte)}"></label>
+        <input type="text" value="${esc(e.texte)}" data-action="etape-renommer" data-id="${t.id}" data-etape="${e.id}" aria-label="Texte de l’étape ${i + 1}" enterkeyhint="done" autocomplete="off">
+        <span class="controles"><button class="btn-icone" data-action="etape-monter" data-id="${t.id}" data-etape="${e.id}" ${i === 0 ? 'disabled' : ''} aria-label="Monter l’étape">↑</button>
+        <button class="btn-icone" data-action="etape-descendre" data-id="${t.id}" data-etape="${e.id}" ${i === t.etapes.length - 1 ? 'disabled' : ''} aria-label="Descendre l’étape">↓</button>
+        <button class="btn-icone" data-action="etape-suppr" data-id="${t.id}" data-etape="${e.id}" aria-label="Supprimer l’étape">✕</button></span>
+      </div>`;
+    });
+    if (!t.etapes.length) h += '<p class="secondaire">Aucune étape. Découpe la tâche en petites actions concrètes.</p>';
+    h += `<form class="ligne-form" data-action="etape-ajouter" data-id="${t.id}" style="margin-top:8px">
+        <input type="text" name="texte" data-fk="etape-${t.id}" placeholder="Ajouter une étape…" enterkeyhint="done" autocomplete="off" aria-label="Nouvelle étape">
+        <button type="submit" class="btn-icone" aria-label="Ajouter l’étape">＋</button>
+      </form>
+      <div class="actions-editeur">
+        <button data-action="tache-suppr" data-id="${t.id}" aria-label="Supprimer la tâche">Supprimer</button>
+        <button class="btn-principal" data-action="tache-ouvrir" data-id="${t.id}">Fermer</button>
+      </div></div>`;
+  }
+  return h + '</div>';
+}
+
+function rendreHabitudes() {
+  const a = aujourdhui();
+  const jours = Array.from({ length: 7 }, (_, i) => decaler(a, i - 6));
+  let h = `<div class="titre-bloc"><h2>Habitudes</h2></div>`;
+  if (etat.habitudes.length) {
+    h += `<div class="grille" aria-hidden="true">${jours.map(j =>
+      `<div class="jour-entete${j === a ? ' auj' : ''}">${j === a ? 'auj.' : esc(formatJour(j, { weekday: 'short' }).replace('.', ''))}<br>${Number(j.slice(8))}</div>`).join('')}</div>`;
+    for (const hab of etat.habitudes) {
+      const s = serie(hab);
+      const edit = ui.habitudeEditee === hab.id;
+      h += `<div class="habitude"><div class="habitude-haut">
+          <span class="habitude-nom" data-nom-habitude="${hab.id}">${esc(hab.nom)}</span>
+          <span class="serie">Série : ${pluriel(s, 'jour')}</span>
+          <button class="btn-lien" data-action="habitude-editer" data-id="${hab.id}">${edit ? 'OK' : 'Modifier'}</button>
+        </div>`;
+      if (edit) {
+        h += `<div class="ligne-form" style="margin-bottom:8px">
+            <input type="text" value="${esc(hab.nom)}" data-action="habitude-renommer" data-id="${hab.id}" aria-label="Nom de l’habitude" enterkeyhint="done" autocomplete="off">
+            <button data-action="habitude-suppr" data-id="${hab.id}">Supprimer</button></div>`;
+      }
+      h += `<div class="grille">${jours.map(j => `<label class="case"><input type="checkbox" data-action="habitude-cocher" data-id="${hab.id}" data-jour="${j}" ${hab.jours[j] ? 'checked' : ''} aria-label="${esc(hab.nom)} — ${esc(formatJour(j, { weekday: 'long', day: 'numeric', month: 'long' }))}"></label>`).join('')}</div></div>`;
+    }
+  } else {
+    h += '<p class="vide">Aucune habitude pour l’instant.</p>';
+  }
+  h += `<form class="ligne-form" data-action="habitude-ajouter" style="margin-top:12px">
+      <input type="text" name="nom" data-fk="nouvelle-habitude" placeholder="Nouvelle habitude…" enterkeyhint="done" autocomplete="off" aria-label="Nouvelle habitude">
+      <button type="submit" class="btn-icone" aria-label="Ajouter l’habitude">＋</button></form>`;
+  $('#habitudes').innerHTML = h;
+}
+
+function rendreObjectifs() {
+  let h = `<div class="titre-bloc"><h2>Objectifs <span class="compteur">${etat.objectifs.length}/${MAX_OBJECTIFS}</span></h2></div>`;
+  if (!etat.objectifs.length) h += '<p class="vide">Aucun objectif pour l’instant.</p>';
+  h += '<ul>';
+  for (const o of etat.objectifs) {
+    const liees = etat.taches.filter(t => t.objectif === o.id);
+    const finies = liees.filter(tacheFinie).length;
+    const pct = liees.length ? Math.round(finies / liees.length * 100) : 0;
+    const edit = ui.objectifEdite === o.id;
+    h += `<li class="objectif"><div class="objectif-haut">
+        <span class="objectif-titre" data-nom-objectif="${o.id}">${esc(o.titre)}</span>
+        <button class="btn-lien" data-action="objectif-editer" data-id="${o.id}">${edit ? 'OK' : 'Modifier'}</button></div>`;
+    if (edit) {
+      h += `<div class="ligne-form" style="margin-bottom:8px">
+          <input type="text" value="${esc(o.titre)}" data-action="objectif-renommer" data-id="${o.id}" aria-label="Nom de l’objectif" enterkeyhint="done" autocomplete="off">
+          <button data-action="objectif-suppr" data-id="${o.id}">Supprimer</button></div>`;
+    }
+    h += `<div class="barre" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Progression"><div style="width:${pct}%"></div></div>
+        <div class="secondaire">${liees.length ? `${finies}/${liees.length} tâches terminées · ${pct} %` : 'Aucune tâche rattachée'}</div></li>`;
+  }
+  h += '</ul>';
+  if (etat.objectifs.length < MAX_OBJECTIFS) {
+    h += `<form class="ligne-form" data-action="objectif-ajouter" style="margin-top:12px">
+      <input type="text" name="titre" data-fk="nouvel-objectif" placeholder="Nouvel objectif…" enterkeyhint="done" autocomplete="off" aria-label="Nouvel objectif">
+      <button type="submit" class="btn-icone" aria-label="Ajouter l’objectif">＋</button></form>`;
+  } else {
+    h += `<p class="secondaire" style="margin-top:12px">3 objectifs maximum. Supprime-en un pour en ajouter un autre.</p>`;
+  }
+  $('#objectifs').innerHTML = h;
+}
+
+function rendrePied() {
+  const badgeDispo = 'setAppBadge' in navigator && 'Notification' in window;
+  let badge = '';
+  if (badgeDispo && Notification.permission === 'default') {
+    badge = '<button class="plein" data-action="activer-badge">Activer le badge</button>';
+  } else if (badgeDispo && Notification.permission === 'denied') {
+    badge = '<p class="info">Badge bloqué : autorise les notifications pour cette app dans Réglages.</p>';
+  }
+  const derniere = etat.dernierExport ? `le ${formatJour(etat.dernierExport, { day: 'numeric', month: 'long', year: 'numeric' })}` : 'jamais';
+  $('#pied').innerHTML = `
+    <button data-action="exporter">Exporter mes données</button>
+    <button data-action="importer">Importer mes données</button>
+    ${badge}
+    ${aDesExemples() ? '<button class="plein" data-action="effacer-exemple">Effacer les données d’exemple</button>' : ''}
+    <p class="info">Tes données restent sur cet appareil. Dernière sauvegarde : ${esc(derniere)}.</p>`;
+}
+
+/* ----- Fenêtre « Préparer demain » (4 étapes) ----- */
+function ouvrirAssistant(cible, etape) {
+  const plan = etat.priorites[cible];
+  ui.assistant = {
+    cible, etape,
+    choix: plan ? plan.taches.filter(id => { const t = tache(id); return t && !tacheFinie(t); }) : [],
+    saisies: {}, note: plan ? plan.note : '', garderDefilement: false
+  };
+  rendreTout();
+  const btn = $('.modale-haut .btn-icone'); if (btn) btn.focus({ preventScroll: true });
+}
+
+function rendreAssistant() {
+  const m = $('#modale');
+  const A = ui.assistant;
+  if (!A) { m.hidden = true; m.innerHTML = ''; document.body.classList.remove('bloque'); return; }
+  m.hidden = false; document.body.classList.add('bloque');
+  const demain = A.cible !== aujourdhui();
+  const mot = demain ? 'demain' : 'aujourd’hui';
+  A.choix = A.choix.filter(id => { const t = tache(id); return t && !tacheFinie(t); });
+  let c = '';
+  if (A.etape === 1) {
+    c += `<p class="intro">Trie ta boîte de capture : transforme chaque élément en tâche, ou supprime-le.</p>`;
+    c += etat.capture.length ? `<ul class="liste">${etat.capture.map(itemCapture).join('')}</ul>` : '<p class="vide">Ta boîte de capture est vide. Passe à l’étape suivante.</p>';
+  } else if (A.etape === 2) {
+    const plein = A.choix.length >= MAX_PRIORITES;
+    c += `<p class="intro">Choisis de 1 à 3 tâches pour ${mot}.</p>
+      <p class="limite">${A.choix.length}/3 choisie${A.choix.length > 1 ? 's' : ''}${plein ? ' — maximum atteint' : ''}</p>`;
+    const dispo = etat.taches.filter(t => !tacheFinie(t));
+    if (!dispo.length) c += '<p class="vide">Aucune tâche en cours. Ajoute-en une ci-dessous.</p>';
+    const groupes = [...etat.objectifs.map(o => ({ titre: o.titre, liste: dispo.filter(t => t.objectif === o.id) })),
+      { titre: 'Sans objectif', liste: dispo.filter(t => !t.objectif || !objectif(t.objectif)) }];
+    for (const g of groupes) {
+      if (!g.liste.length) continue;
+      c += `<div class="groupe"><div class="groupe-titre">${esc(g.titre)}</div>`;
+      for (const t of g.liste) {
+        const coche = A.choix.includes(t.id);
+        const bloque = plein && !coche;
+        c += `<label class="choix${bloque ? ' desactive' : ''}"><span class="case"><input type="checkbox" data-action="assist-choisir" data-id="${t.id}" ${coche ? 'checked' : ''} ${bloque ? 'disabled' : ''}></span><span>${esc(t.titre)}</span></label>`;
+      }
+      c += '</div>';
+    }
+    c += `<form class="ligne-form" data-action="assist-nouvelle-tache" style="margin-top:16px">
+        <input type="text" name="titre" data-fk="assist-nouvelle" placeholder="Ajouter une tâche…" enterkeyhint="done" autocomplete="off" aria-label="Ajouter une tâche">
+        <button type="submit" class="btn-icone" aria-label="Ajouter">＋</button></form>`;
+  } else if (A.etape === 3) {
+    c += `<p class="intro">Pour chaque tâche, vérifie la prochaine étape : une action concrète que tu peux commencer tout de suite.</p>`;
+    for (const id of A.choix) {
+      const t = tache(id);
+      const et = prochaineEtape(t);
+      if (A.saisies[id] === undefined) A.saisies[id] = et ? et.texte : '';
+      c += `<div class="bloc-assist"><div class="titre-t">${esc(t.titre)}</div>
+          <label class="etiquette" for="as-${id}">${et ? 'Prochaine étape (modifie-la si besoin)' : 'Quelle est la toute première action ? (facultatif)'}</label>
+          <input type="text" id="as-${id}" data-fk="as-${id}" data-action="assist-saisie" data-id="${id}" value="${esc(A.saisies[id])}" placeholder="Ex. : ouvrir le dossier et trier 10 photos" enterkeyhint="done" autocomplete="off"></div>`;
+    }
+  } else {
+    c += `<label class="etiquette" for="assist-note" style="margin-top:0">À ne pas oublier ${mot} (facultatif)</label>
+      <input type="text" id="assist-note" data-fk="assist-note" data-action="assist-note" value="${esc(A.note)}" placeholder="Ex. : appeler le plombier avant midi" enterkeyhint="done" autocomplete="off">
+      <div class="etiquette" style="margin-top:20px">Tes priorités pour ${mot}</div><ol>`;
+    A.choix.forEach((id, i) => { c += `<li class="item"><span class="prio-num" style="color:var(--texte2)">${i + 1}</span><span class="item-texte">${esc(tache(id).titre)}</span></li>`; });
+    c += '</ol>';
+  }
+  const suivantOk = A.etape !== 2 || (A.choix.length >= 1 && A.choix.length <= MAX_PRIORITES);
+  m.innerHTML = `<div class="modale-boite" role="dialog" aria-modal="true" aria-labelledby="modale-titre">
+    <div class="modale-haut"><div><div class="petit">Étape ${A.etape} sur 4</div>
+      <h2 id="modale-titre">${demain ? 'Préparer demain' : 'Mes priorités du jour'}</h2></div>
+      <button class="btn-icone" data-action="assist-fermer" aria-label="Fermer">✕</button></div>
+    <div class="modale-corps">${c}</div>
+    <div class="modale-bas">
+      <button data-action="assist-retour" ${A.etape === 1 ? 'disabled' : ''}>Retour</button>
+      ${A.etape < 4
+        ? `<button class="btn-principal" data-action="assist-suivant" ${suivantOk ? '' : 'disabled'}>Suivant</button>`
+        : `<button class="btn-principal" data-action="assist-valider">Enregistrer</button>`}
+    </div></div>`;
+}
+
+function validerAssistant() {
+  const A = ui.assistant;
+  if (!A || !A.choix.length) return;
+  for (const id of A.choix) {
+    const t = tache(id);
+    if (!t) continue;
+    const texte = (A.saisies[id] || '').trim();
+    const et = prochaineEtape(t);
+    if (et && texte) et.texte = texte;
+    else if (!et && texte) t.etapes.push({ id: nouvelId(), texte, faite: false });
+  }
+  etat.priorites[A.cible] = { taches: [...A.choix], note: A.note.trim() };
+  ui.assistant = null;
+  sauver(); rendreTout();
+}
+
+/* =====================================================================
+   MINUTEUR 25 MIN
+   ===================================================================== */
+let audio = null;
+function preparerSon() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!audio) audio = new Ctx();
+    if (audio.state === 'suspended') audio.resume();
+    // Un son muet joué pendant le toucher « débloque » le son sur iPhone
+    const o = audio.createOscillator(), g = audio.createGain();
+    g.gain.value = 0; o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.05);
+  } catch (e) { /* pas de son disponible */ }
+}
+function bip() {
+  try {
+    if (!audio) { const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return; audio = new Ctx(); }
+    if (audio.state === 'suspended') audio.resume();
+    const t0 = audio.currentTime + 0.05;
+    for (let i = 0; i < 3; i++) {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sine'; o.frequency.value = 880;
+      const d = t0 + i * 0.45;
+      g.gain.setValueAtTime(0.0001, d);
+      g.gain.exponentialRampToValueAtTime(0.4, d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, d + 0.3);
+      o.connect(g).connect(audio.destination); o.start(d); o.stop(d + 0.32);
+    }
+  } catch (e) { /* pas de son disponible */ }
+  try { if (navigator.vibrate) navigator.vibrate([300, 150, 300]); } catch (e) {}
+}
+function finirMinuteur() {
+  etat.minuteur = null;
+  ui.minuteurFini = true;
+  sauver(); bip(); rendreTout();
+  const z = $('.fin-minuteur'); if (z) z.scrollIntoView({ block: 'center' });
+}
+function tic() {
+  if (etat.minuteur) {
+    const reste = etat.minuteur.fin - Date.now();
+    if (reste <= 0) finirMinuteur();
+    else { const el = $('#minuteur-temps'); if (el) el.textContent = formatDuree(reste); }
+  }
+  // Changement de jour (minuit) ou passage de 18 h : on réaffiche
+  const n = maintenant();
+  if (n.jour + (n.heure >= 18 ? '-soir' : '-jour') !== ui.repereAffiche) rendreTout();
+}
+
+/* =====================================================================
+   BADGE SUR L'ICÔNE
+   ===================================================================== */
+function mettreAJourBadge() {
+  if (!('setAppBadge' in navigator)) return;
+  try {
+    const n = prioritesDuJour().filter(t => !tacheFinie(t)).length;
+    const p = n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge();
+    if (p && p.catch) p.catch(() => {});
+  } catch (e) { /* badge non pris en charge */ }
+}
+
+/* =====================================================================
+   EXPORT / IMPORT
+   ===================================================================== */
+async function exporter() {
+  const jour = aujourdhui();
+  const nom = `tableau-de-bord-${jour}.json`;
+  const donnees = { ...etat, minuteur: null, dernierExport: jour };
+  const contenu = JSON.stringify({ application: 'tableau-de-bord', exporteLe: new Date().toISOString(), donnees }, null, 2);
+  const blob = new Blob([contenu], { type: 'application/json' });
+  const tactile = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  if (tactile && navigator.canShare && navigator.share) {
+    try {
+      const fichier = new File([blob], nom, { type: 'application/json' });
+      if (navigator.canShare({ files: [fichier] })) {
+        await navigator.share({ files: [fichier] });
+        noterExport(jour);
+        return;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // partage annulé : rien n'est enregistré
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nom;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  noterExport(jour);
+}
+function noterExport(jour) { etat.dernierExport = jour; sauver(); rendreTout(); }
+
+async function importer(fichier) {
+  let d;
+  try {
+    d = JSON.parse(await fichier.text());
+    if (d && d.application === 'tableau-de-bord' && d.donnees) d = d.donnees;
+  } catch (e) { d = null; }
+  if (!formatValide(d)) {
+    alert('Ce fichier n’est pas une sauvegarde valide du tableau de bord. Rien n’a été modifié.');
+    return;
+  }
+  if (!confirm('Ceci va remplacer toutes tes données actuelles. Continuer ?')) return;
+  const garde = etat.dernierExport;
+  etat = normaliser(d);
+  if (garde && (!etat.dernierExport || garde > etat.dernierExport)) etat.dernierExport = garde;
+  ui.tacheOuverte = ui.habitudeEditee = ui.objectifEdite = null;
+  ui.assistant = null; ui.minuteurFini = false;
+  sauver(); rendreTout();
+  alert('Données importées.');
+}
+
+function effacerExemples() {
+  if (!confirm('Effacer toutes les données d’exemple ? Ce que tu as ajouté toi-même est conservé.')) return;
+  const garder = x => !x.exemple;
+  const objRestants = new Set(etat.objectifs.filter(garder).map(o => o.id));
+  etat.objectifs = etat.objectifs.filter(garder);
+  etat.taches = etat.taches.filter(garder);
+  etat.taches.forEach(t => { if (t.objectif && !objRestants.has(t.objectif)) t.objectif = null; });
+  etat.habitudes = etat.habitudes.filter(garder);
+  etat.capture = etat.capture.filter(garder);
+  for (const [j, p] of Object.entries(etat.priorites)) {
+    p.taches = p.taches.filter(id => tache(id));
+    if (p.exemple) delete etat.priorites[j];
+  }
+  ui.tacheOuverte = ui.habitudeEditee = ui.objectifEdite = null;
+  sauver(); rendreTout();
+}
+
+/* =====================================================================
+   ACTIONS (ce qui se passe quand on touche un bouton)
+   ===================================================================== */
+function retirerDesPriorites(idTache) {
+  for (const p of Object.values(etat.priorites)) p.taches = p.taches.filter(id => id !== idTache);
+}
+function capturerEnTache(id) {
+  const c = etat.capture.find(x => x.id === id);
+  if (!c) return;
+  etat.taches.push({ id: nouvelId(), titre: c.texte, objectif: null, faite: false, etapes: [] });
+  etat.capture = etat.capture.filter(x => x.id !== id);
+}
+
+const clics = {
+  'exporter': () => exporter(),
+  'importer': () => { const f = $('#fichier-import'); f.value = ''; f.click(); },
+  'effacer-exemple': () => effacerExemples(),
+  'activer-badge': async () => {
+    try { await Notification.requestPermission(); } catch (e) {}
+    mettreAJourBadge(); rendreTout();
+  },
+  'preparer-demain': () => ouvrirAssistant(decaler(aujourdhui(), 1), 1),
+  'choisir-maintenant': () => ouvrirAssistant(aujourdhui(), 2),
+  'prio-annuler': el => {
+    const t = tache(el.dataset.tache); if (!t) return;
+    if (t.etapes.length) t.etapes[t.etapes.length - 1].faite = false; else t.faite = false;
+    sauver(); rendreTout();
+  },
+  'minuteur-demarrer': () => {
+    preparerSon();
+    const t = prioritesDuJour()[0];
+    etat.minuteur = { fin: Date.now() + DUREE_MINUTEUR, tache: t ? t.id : null };
+    ui.minuteurFini = false; sauver(); rendreTout();
+  },
+  'minuteur-arreter': () => { etat.minuteur = null; sauver(); rendreTout(); },
+  'minuteur-ok': () => { ui.minuteurFini = false; rendreTout(); },
+  'capture-tache': el => { capturerEnTache(el.dataset.id); sauver(); rendreTout(); },
+  'capture-suppr': el => { etat.capture = etat.capture.filter(x => x.id !== el.dataset.id); sauver(); rendreTout(); },
+  'tache-ouvrir': el => { ui.tacheOuverte = ui.tacheOuverte === el.dataset.id ? null : el.dataset.id; rendreTout(); },
+  'tache-suppr': el => {
+    const t = tache(el.dataset.id); if (!t) return;
+    if (!confirm(`Supprimer la tâche « ${t.titre} » ?`)) return;
+    etat.taches = etat.taches.filter(x => x.id !== t.id);
+    retirerDesPriorites(t.id);
+    ui.tacheOuverte = null; sauver(); rendreTout();
+  },
+  'etape-monter': el => deplacerEtape(el, -1),
+  'etape-descendre': el => deplacerEtape(el, 1),
+  'etape-suppr': el => {
+    const t = tache(el.dataset.id); if (!t) return;
+    const avant = tacheFinie(t);
+    t.etapes = t.etapes.filter(e => e.id !== el.dataset.etape);
+    if (!t.etapes.length) t.faite = avant;
+    sauver(); rendreTout();
+  },
+  'habitude-editer': el => { ui.habitudeEditee = ui.habitudeEditee === el.dataset.id ? null : el.dataset.id; rendreTout(); },
+  'habitude-suppr': el => {
+    const h = habitude(el.dataset.id); if (!h) return;
+    if (!confirm(`Supprimer l’habitude « ${h.nom} » et tout son historique ?`)) return;
+    etat.habitudes = etat.habitudes.filter(x => x.id !== h.id);
+    ui.habitudeEditee = null; sauver(); rendreTout();
+  },
+  'objectif-editer': el => { ui.objectifEdite = ui.objectifEdite === el.dataset.id ? null : el.dataset.id; rendreTout(); },
+  'objectif-suppr': el => {
+    const o = objectif(el.dataset.id); if (!o) return;
+    if (!confirm(`Supprimer l’objectif « ${o.titre} » ? Ses tâches sont conservées dans « Sans objectif ».`)) return;
+    etat.objectifs = etat.objectifs.filter(x => x.id !== o.id);
+    etat.taches.forEach(t => { if (t.objectif === o.id) t.objectif = null; });
+    ui.objectifEdite = null; sauver(); rendreTout();
+  },
+  'assist-fermer': () => { ui.assistant = null; rendreTout(); },
+  'assist-retour': () => { const A = ui.assistant; if (A.etape > 1) { A.etape--; A.garderDefilement = false; } rendreTout(); },
+  'assist-suivant': () => {
+    const A = ui.assistant;
+    if (A.etape === 2 && (A.choix.length < 1 || A.choix.length > MAX_PRIORITES)) return;
+    if (A.etape < 4) { A.etape++; A.garderDefilement = false; }
+    rendreTout();
+  },
+  'assist-valider': () => validerAssistant()
+};
+
+function deplacerEtape(el, sens) {
+  const t = tache(el.dataset.id); if (!t) return;
+  const i = t.etapes.findIndex(e => e.id === el.dataset.etape);
+  const j = i + sens;
+  if (i < 0 || j < 0 || j >= t.etapes.length) return;
+  [t.etapes[i], t.etapes[j]] = [t.etapes[j], t.etapes[i]];
+  sauver(); rendreTout();
+  const meme = document.querySelector(`[data-action="${sens < 0 ? 'etape-monter' : 'etape-descendre'}"][data-etape="${el.dataset.etape}"]`);
+  if (meme && !meme.disabled) meme.focus({ preventScroll: true });
+}
+
+// Changements (cases à cocher, renommages, listes déroulantes)
+const changements = {
+  'prio-cocher': el => {
+    const t = tache(el.dataset.tache); if (!t) return;
+    if (el.dataset.etape) { const e = t.etapes.find(x => x.id === el.dataset.etape); if (e) e.faite = el.checked; }
+    else t.faite = el.checked;
+    sauver(); rendreTout();
+  },
+  'tache-cocher': el => { const t = tache(el.dataset.id); if (t) { t.faite = el.checked; sauver(); rendreTout(); } },
+  'etape-cocher': el => {
+    const t = tache(el.dataset.id); const e = t && t.etapes.find(x => x.id === el.dataset.etape);
+    if (e) { e.faite = el.checked; sauver(); rendreTout(); }
+  },
+  // Les renommages n'effacent pas l'affichage (pour ne pas « avaler » le toucher suivant) :
+  // on met juste à jour le texte partout où il apparaît.
+  'tache-renommer': el => {
+    const t = tache(el.dataset.id); const v = el.value.trim();
+    if (!t) return; if (!v) { el.value = t.titre; return; }
+    t.titre = v; sauver(); majTextes(`[data-nom-tache="${t.id}"]`, v);
+  },
+  'etape-renommer': el => {
+    const t = tache(el.dataset.id); const e = t && t.etapes.find(x => x.id === el.dataset.etape);
+    if (!e) return; const v = el.value.trim();
+    if (!v) { el.value = e.texte; return; }
+    e.texte = v; sauver(); majTextes(`[data-nom-etape="${e.id}"]`, v);
+  },
+  'tache-objectif': el => { const t = tache(el.dataset.id); if (t) { t.objectif = el.value || null; sauver(); rendreTout(); } },
+  'habitude-cocher': el => {
+    const h = habitude(el.dataset.id); if (!h) return;
+    if (el.checked) h.jours[el.dataset.jour] = true; else delete h.jours[el.dataset.jour];
+    sauver(); rendreTout();
+  },
+  'habitude-renommer': el => {
+    const h = habitude(el.dataset.id); const v = el.value.trim();
+    if (!h) return; if (!v) { el.value = h.nom; return; }
+    h.nom = v; sauver(); majTextes(`[data-nom-habitude="${h.id}"]`, v);
+  },
+  'objectif-renommer': el => {
+    const o = objectif(el.dataset.id); const v = el.value.trim();
+    if (!o) return; if (!v) { el.value = o.titre; return; }
+    o.titre = v; sauver(); majTextes(`[data-nom-objectif="${o.id}"]`, v);
+  },
+  'assist-choisir': el => {
+    const A = ui.assistant; const id = el.dataset.id;
+    if (el.checked) { if (A.choix.length < MAX_PRIORITES && !A.choix.includes(id)) A.choix.push(id); }
+    else A.choix = A.choix.filter(x => x !== id);
+    rendreTout();
+  }
+};
+function majTextes(selecteur, texte) { document.querySelectorAll(selecteur).forEach(n => { n.textContent = texte; }); }
+
+// Formulaires (touche Entrée ou bouton ＋)
+const formulaires = {
+  'capture-ajouter': f => { const v = f.texte.value.trim(); if (!v) return; etat.capture.push({ id: nouvelId(), texte: v }); },
+  'tache-ajouter': f => {
+    const v = f.titre.value.trim(); if (!v) return;
+    etat.taches.push({ id: nouvelId(), titre: v, objectif: f.objectif.value || null, faite: false, etapes: [] });
+  },
+  'etape-ajouter': f => {
+    const t = tache(f.dataset.id); const v = f.texte.value.trim(); if (!t || !v) return;
+    t.etapes.push({ id: nouvelId(), texte: v, faite: false });
+  },
+  'habitude-ajouter': f => { const v = f.nom.value.trim(); if (!v) return; etat.habitudes.push({ id: nouvelId(), nom: v, jours: {} }); },
+  'objectif-ajouter': f => {
+    const v = f.titre.value.trim(); if (!v || etat.objectifs.length >= MAX_OBJECTIFS) return;
+    etat.objectifs.push({ id: nouvelId(), titre: v });
+  },
+  'assist-nouvelle-tache': f => {
+    const v = f.titre.value.trim(); if (!v) return;
+    const t = { id: nouvelId(), titre: v, objectif: null, faite: false, etapes: [] };
+    etat.taches.push(t);
+    if (ui.assistant.choix.length < MAX_PRIORITES) ui.assistant.choix.push(t.id);
+  }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el || el.tagName === 'FORM' || el.tagName === 'INPUT' || el.tagName === 'SELECT') return;
+  const f = clics[el.dataset.action];
+  if (f) f(el, e);
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.id === 'fichier-import') { if (el.files && el.files[0]) importer(el.files[0]); return; }
+  const f = el.dataset && changements[el.dataset.action];
+  if (f) f(el, e);
+});
+document.addEventListener('input', e => {
+  const el = e.target, A = ui.assistant;
+  if (!A || !el.dataset) return;
+  if (el.dataset.action === 'assist-saisie') A.saisies[el.dataset.id] = el.value;
+  if (el.dataset.action === 'assist-note') A.note = el.value;
+});
+document.addEventListener('submit', e => {
+  const f = e.target;
+  const action = formulaires[f.dataset.action];
+  if (!action) return;
+  e.preventDefault();
+  // Le champ a le focus : on le garde pour pouvoir enchaîner les saisies
+  const champ = f.querySelector('input[type=text]');
+  if (champ && champ.dataset.fk) champ.focus({ preventScroll: true });
+  action(f);
+  sauver(); rendreTout();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && ui.assistant) { ui.assistant = null; rendreTout(); }
+  // Entrée dans un champ de renommage : on valide et on ferme le clavier
+  if (e.key === 'Enter' && e.target.matches && e.target.matches('input[data-action$="-renommer"], input[data-action="assist-saisie"], input[data-action="assist-note"]')) {
+    e.preventDefault(); e.target.blur();
+  }
+});
+
+/* =====================================================================
+   DÉMARRAGE
+   ===================================================================== */
+charger();
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().catch(() => {});
+}
+if (etat.minuteur && etat.minuteur.fin <= Date.now()) finirMinuteur();
+rendreTout();
+mettreAJourBadge();
+setInterval(tic, 1000);
+// Quand on revient sur l'app (iPhone), on vérifie l'heure et le jour tout de suite
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { tic(); mettreAJourBadge(); } });
+window.addEventListener('pageshow', () => tic());
+</script>
+</body>
+</html>

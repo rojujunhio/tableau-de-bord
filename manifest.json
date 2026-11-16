@@ -1,0 +1,17 @@
+{
+  "name": "Tableau de bord",
+  "short_name": "Tableau de bord",
+  "description": "Mon tableau de bord personnel : priorités du jour, tâches, habitudes et objectifs.",
+  "lang": "fr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
